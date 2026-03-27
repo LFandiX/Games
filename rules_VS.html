@@ -645,6 +645,57 @@ body::before{content:'';position:fixed;inset:0;
         <div class="el-stat"><span class="el-stat-label">Target</span><span class="el-stat-val">Self only</span></div>
         <div class="el-effect-desc">"A divine purification. Remove all debuffs (burn, stun, freeze) and restore 20 HP instantly."</div>
       </div>
+      <div class="el-card card-ice" style="animation-delay:0.26s">
+        <div class="el-card-head">
+          <div class="el-icon-big" style="color:var(--ice)">❄️</div>
+          <div><div class="el-card-title" style="color:var(--ice)">Ice</div><div class="el-card-type" style="color:var(--ice)">Freeze</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Base Damage</span><span class="el-stat-val" style="color:var(--ice)">15 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">Special Effect</span><span class="el-stat-val" style="color:var(--ice)">🧊 Freeze</span></div>
+        <div class="el-stat"><span class="el-stat-label">Duration</span><span class="el-stat-val">1 round</span></div>
+        <div class="el-effect-desc">"Bekukan musuh. Target tidak dapat melakukan aksi pada ronde berikutnya."</div>
+      </div>
+
+      <div class="el-card" style="background:linear-gradient(135deg,rgba(210,180,140,0.15),rgba(210,180,140,0.05));border-color:rgba(210,180,140,0.4);animation-delay:0.29s">
+        <div class="el-card-head">
+          <div class="el-icon-big" style="color:#D2B48C">🌪️</div>
+          <div><div class="el-card-title" style="color:#D2B48C">Sandstorm</div><div class="el-card-type" style="color:#D2B48C">AOE + Shield Break</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Main Target</span><span class="el-stat-val" style="color:#D2B48C">12 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">Splash Damage</span><span class="el-stat-val">5 HP (All enemies)</span></div>
+        <div class="el-effect-desc">"Badai pasir yang mengikis segalanya. Sangat efektif untuk menghancurkan Shield lawan."</div>
+      </div>
+
+      <div class="el-card" style="background:linear-gradient(135deg,rgba(173,255,47,0.12),rgba(173,255,47,0.04));border-color:rgba(173,255,47,0.4);animation-delay:0.32s">
+        <div class="el-card-head">
+          <div class="el-icon-big" style="color:#ADFF2F">💉</div>
+          <div><div class="el-card-title" style="color:#ADFF2F">Poison</div><div class="el-card-type" style="color:#ADFF2F">Long DoT</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Initial Damage</span><span class="el-stat-val">10 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">Poison Mark</span><span class="el-stat-val" style="color:#ADFF2F">8 HP / round</span></div>
+        <div class="el-stat"><span class="el-stat-label">Duration</span><span class="el-stat-val">3 rounds</span></div>
+        <div class="el-effect-desc">"Racun yang tidak bisa di-stack. Memberikan damage berkelanjutan yang mematikan."</div>
+      </div>
+
+      <div class="el-card" style="background:linear-gradient(135deg,rgba(255,255,255,0.15),rgba(255,255,255,0.05));border-color:rgba(255,255,255,0.3);animation-delay:0.35s">
+        <div class="el-card-head">
+          <div class="el-icon-big" style="color:#E0FFFF">💎</div>
+          <div><div class="el-card-title" style="color:#E0FFFF">Crystal</div><div class="el-card-type" style="color:#E0FFFF">Dmg + Shield</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Base Damage</span><span class="el-stat-val">15 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">Self Shield</span><span class="el-stat-val" style="color:#44FF88">+10 Shield</span></div>
+        <div class="el-effect-desc">"Menyerang sekaligus menciptakan lapisan kristal pelindung untuk ronde berikutnya."</div>
+      </div>
+
+      <div class="el-card" style="background:linear-gradient(135deg,rgba(255,140,0,0.15),rgba(255,140,0,0.05));border-color:rgba(255,140,0,0.4);animation-delay:0.38s">
+        <div class="el-card-head">
+          <div class="el-icon-big" style="color:#FF8C00">☀️</div>
+          <div><div class="el-card-title" style="color:#FF8C00">Solar</div><div class="el-card-type" style="color:#FF8C00">Desperation Dmg</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Normal Dmg</span><span class="el-stat-val">20 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">HP > 60%</span><span class="el-stat-val" style="color:#FF4500">35 HP!</span></div>
+        <div class="el-effect-desc">"Kekuatan matahari yang menguat saat penggunanya terdesak."</div>
+      </div>
 
     </div>
   </div>
@@ -693,7 +744,49 @@ body::before{content:'';position:fixed;inset:0;
         <div class="el-stat"><span class="el-stat-label">Damage</span><span class="el-stat-val">None (utility only)</span></div>
         <div class="el-effect-desc">"Transmute your entire hand into new random cards. High risk, high reward — might give you Meteors!"</div>
       </div>
+      <div class="rare-card card-meteor" style="animation-delay:0.2s">
+        <div class="rare-badge">⭐ RARE</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2s ease-in-out infinite;">🌋</div>
+          <div><div class="el-card-title" style="color:var(--meteor)">Eruption</div><div class="el-card-type" style="color:var(--meteor)">Heavy Burn AOE</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Main Target</span><span class="el-stat-val" style="color:var(--meteor)">30 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">Global Effect</span><span class="el-stat-val">🔥 Burn (All enemies)</span></div>
+        <div class="el-effect-desc">"Ledakan vulkanik yang membakar satu target dan menyebarkan hawa panas ke seluruh lawan."</div>
+      </div>
 
+      <div class="rare-card" style="background:linear-gradient(135deg,rgba(200,200,255,0.15),rgba(200,200,255,0.05));border-color:rgba(200,200,255,0.5);animation-delay:0.23s">
+        <div class="rare-badge">⭐ RARE</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2.5s ease-in-out infinite;">🌀</div>
+          <div><div class="el-card-title" style="color:#AAAAEE">Mirror Image</div><div class="el-card-type" style="color:#AAAAEE">Reflection</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Effect</span><span class="el-stat-val">Reflect Card</span></div>
+        <div class="el-stat"><span class="el-stat-label">Counter</span><span class="el-stat-val">Dmg + Debuffs</span></div>
+        <div class="el-effect-desc">"Menciptakan bayangan cermin yang memantulkan kembali semua serangan dan status buruk ke penyerang."</div>
+      </div>
+
+      <div class="rare-card card-earth" style="border-width:1.5px; animation-delay:0.26s">
+        <div class="rare-badge">⭐ RARE</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 3s ease-in-out infinite;">🌿</div>
+          <div><div class="el-card-title" style="color:var(--earth)">Overgrowth</div><div class="el-card-type" style="color:var(--earth)">Heal + Tank</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Heal</span><span class="el-stat-val" style="color:#44FF88">+25 HP</span></div>
+        <div class="el-stat"><span class="el-stat-label">Shield</span><span class="el-stat-val" style="color:var(--earth)">+15 Shield</span></div>
+        <div class="el-effect-desc">"Pertumbuhan alam yang masif untuk memulihkan diri sekaligus melindungi dari serangan."</div>
+      </div>
+
+      <div class="rare-card" style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(155,77,202,0.1));border-color:rgba(255,215,0,0.4);animation-delay:0.29s">
+        <div class="rare-badge">⭐ RARE</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2.2s ease-in-out infinite;">⏳</div>
+          <div><div class="el-card-title" style="color:#FFD700">Time Warp</div><div class="el-card-type" style="color:#FFD700">Time Loop</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Utility</span><span class="el-stat-val">Cleanse All Debuffs</span></div>
+        <div class="el-stat"><span class="el-stat-label">Force Action</span><span class="el-stat-val">Repeat last card</span></div>
+        <div class="el-effect-desc">"Memutar waktu. Membersihkan diri dari Stun/Freeze dan memaksa musuh mengulang aksinya jika kartu masih ada."</div>
+      </div>
     </div>
   </div>
 
@@ -773,7 +866,49 @@ body::before{content:'';position:fixed;inset:0;
         <div class="el-stat"><span class="el-stat-label">Risk</span><span class="el-stat-val">Bisa backfire jika musuh HP lebih rendah</span></div>
         <div class="el-effect-desc">"Ruang Suci menukar takdir dua jiwa. Berikan HP tinggi musuh padamu — comeback mechanic paling dramatis di game!"</div>
       </div>
+      <div class="rare-card card-embersoul" style="animation-delay:0.2s">
+        <div class="cursed-badge">🍑 CURSED</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2s ease-in-out infinite;">🐲</div>
+          <div><div class="el-card-title" style="color:#FF4500">Dragon Heart</div><div class="el-card-type" style="color:#FF4500">HP Boost + AOE</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Max HP Up</span><span class="el-stat-val" style="color:#44FF88">+15 Permanent</span></div>
+        <div class="el-stat"><span class="el-stat-label">AOE Dmg</span><span class="el-stat-val">25 HP (First use)</span></div>
+        <div class="el-effect-desc">"Jantung naga purba yang meningkatkan kapasitas hidup secara permanen dan menghempaskan lawan."</div>
+      </div>
 
+      <div class="rare-card card-voidheart" style="animation-delay:0.23s">
+        <div class="cursed-badge">🍑 CURSED</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2.6s ease-in-out infinite;">🌕</div>
+          <div><div class="el-card-title" style="color:#E6E6FA">Eclipse Fruit</div><div class="el-card-type" style="color:#E6E6FA">Untargetable</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Current Round</span><span class="el-stat-val">Untargetable (Immune)</span></div>
+        <div class="el-stat"><span class="el-stat-label">Next Round</span><span class="el-stat-val" style="color:#FFD700">Damage +50%</span></div>
+        <div class="el-effect-desc">"Menghilang dalam gerhana. Tidak bisa disentuh ronde ini, lalu menyerang dengan kekuatan ganda di ronde berikutnya."</div>
+      </div>
+
+      <div class="rare-card" style="background:linear-gradient(135deg,rgba(255,0,255,0.15),rgba(0,255,255,0.05));border-color:rgba(255,0,255,0.5);animation-delay:0.26s">
+        <div class="cursed-badge">🍑 CURSED</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2s ease-in-out infinite;">🃏</div>
+          <div><div class="el-card-title" style="color:#FF69B4">Jester's Fruit</div><div class="el-card-type" style="color:#FF69B4">Hand Swap</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Effect</span><span class="el-stat-val">Tukar kartu tangan</span></div>
+        <div class="el-stat"><span class="el-stat-label">Target</span><span class="el-stat-val">1 Enemy</span></div>
+        <div class="el-effect-desc">"Lelucon yang kejam. Ambil semua kartu bagus lawan dan berikan sampahmu pada mereka!"</div>
+      </div>
+
+      <div class="rare-card" style="background:linear-gradient(135deg,rgba(255,255,255,0.2),rgba(0,0,0,0.3));border-color:rgba(255,215,0,0.5);animation-delay:0.29s">
+        <div class="cursed-badge">🍑 CURSED</div>
+        <div class="el-card-head" style="margin-bottom:14px;">
+          <div style="font-size:40px;animation:float 2.8s ease-in-out infinite;">⚖️</div>
+          <div><div class="el-card-title" style="color:#FFD700">Judgment Fruit</div><div class="el-card-type" style="color:#FFD700">HP Balance</div></div>
+        </div>
+        <div class="el-stat"><span class="el-stat-label">Higher HP</span><span class="el-stat-val" style="color:#FF6868">-30 HP (Damage)</span></div>
+        <div class="el-stat"><span class="el-stat-label">Lower HP</span><span class="el-stat-val" style="color:#44FF88">+30 HP (Heal)</span></div>
+        <div class="el-effect-desc">"Timbangan keadilan. Menghukum yang kuat dan memulihkan yang lemah secara instan."</div>
+      </div>
     </div>
 
     <div style="background:rgba(255,105,180,0.06);border:1px solid rgba(255,105,180,0.25);border-radius:14px;padding:14px 18px;margin-top:16px;font-size:13px;color:var(--muted);line-height:1.7;">
@@ -857,6 +992,23 @@ body::before{content:'';position:fixed;inset:0;
         <div style="font-size:26px;">🌸</div>
         <div class="status-name" style="color:#66DDFF">Thornwall</div>
         <div class="status-desc">Dari Thornwall Bloom (Ultimate Flower-Scholar). Setiap serangan yang diterima memantul balik 20 dmg ke penyerang. Berlaku 1 ronde.</div>
+      </div>
+      <div class="status-card" style="background:rgba(173,255,47,0.1);border-color:rgba(173,255,47,0.35);animation-delay:0.29s">
+        <div style="font-size:26px;">💉</div>
+        <div class="status-name" style="color:#ADFF2F">Poison</div>
+        <div class="status-desc">Memberikan 8 damage setiap ronde selama 3 ronde. Tidak bisa ditumpuk (stack), namun memberikan tekanan jangka panjang.</div>
+      </div>
+
+      <div class="status-card" style="background:rgba(230,230,250,0.1);border-color:rgba(230,230,250,0.35);animation-delay:0.32s">
+        <div style="font-size:26px;">🌕</div>
+        <div class="status-name" style="color:#E6E6FA">Eclipse Mark</div>
+        <div class="status-desc">Efek dari Eclipse Fruit. Ronde ini pengguna tidak bisa ditarget, ronde berikutnya damage meningkat +50%.</div>
+      </div>
+
+      <div class="status-card" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.35);animation-delay:0.35s">
+        <div style="font-size:26px;">⏳</div>
+        <div class="status-name" style="color:#FFD700">Time Loop</div>
+        <div class="status-desc">Memaksa target menggunakan kartu yang sama dengan ronde sebelumnya jika kartu tersebut masih tersedia di tangan.</div>
       </div>
     </div>
   </div>
