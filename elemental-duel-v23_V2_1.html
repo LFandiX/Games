@@ -1889,8 +1889,10 @@ https://creativecommons.org/licenses/by/4.0/ -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
       <div>🔥 <b>Fire</b> — Burn 2 rounds</div><div>💧 <b>Water</b> — Heal self 15HP</div>
       <div>⚡ <b>Thunder</b> — Stun 1 round</div><div>🌿 <b>Earth</b> — Shield 25 dmg</div>
-      <div>🌪️ <b>Wind</b> — Steal a card</div><div>🌑 <b>Shadow</b> — ×2 if debuffed</div>
-      <div>✨ <b>Holy</b> — Cleanse + heal</div>
+      <div>🌪️ <b>Wind</b> — Steal a card</div><div>❄️ <b>Ice</b> — Freeze 1 round</div>
+      <div>🌑 <b>Shadow</b> — ×2 if debuffed</div><div>✨ <b>Holy</b> — Cleanse + heal</div>
+      <div>🌪️ <b>Sand</b> — 12 DMG + 5 AOE</div><div>💉 <b>Poison</b> — 10 + 8/r (3r)</div>
+      <div>💎 <b>Crystal</b> — 15 DMG + 10 Shld</div><div>☀️ <b>Solar</b> — 20 (35 if HP>60%)</div>
     </div>
     <div class="div"></div>
     <div style="font-size:11px;color:var(--muted);line-height:1.8;">
@@ -1898,14 +1900,25 @@ https://creativecommons.org/licenses/by/4.0/ -->
       ⚡ Beats 💧 &nbsp;|&nbsp; 💧 Beats 🔥 &nbsp;|&nbsp; 🌑 Beats ✨ &nbsp;|&nbsp; ✨ Beats 🌑
     </div>
     <div class="div"></div>
-    <p style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:8px;">⭐ RARE · ☄️ METEOR · 🛡️ BARRIER · ⚗️ ALCHEMY</p>
+    <p style="font-family:'Cinzel',serif;font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:8px;">⭐ RARE ELEMENTS</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;">
+      <div>☄️ Meteor — 40 AOE</div><div>🛡️ Barrier — 2r Immune</div>
+      <div>⚗️ Alchemy — Reroll Hand</div><div>🌋 Eruption — 30 AOE + Burn</div>
+      <div>🌀 Mirror — Reflect (1r)</div><div>⏳ Time Warp — Clns + 45 Shld</div>
+      <div>🌿 Overgrowth — Heal + Shld</div>
+    </div>
+    <div class="div"></div>
     <p style="font-family:'Cinzel',serif;font-size:10px;color:#FF6EFF;letter-spacing:1.5px;margin-bottom:6px;">🍑 CURSED FRUITS (4% chance)</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;">
       <div style="color:#FF69B4;">🍑 Embersoul — Chain Burn</div>
-      <div style="color:#7FFFD4;">🍵 Glacial Curse — Freeze 2r</div>
+      <div style="color:#7FFFD4;">🍵 Glacial — Freeze 2r</div>
       <div style="color:#8A2BE2;">🫐 Voidheart — Drain buffs</div>
-      <div style="color:#CD853F;">🍠 Tremor Tyrant — AOE+Stun</div>
+      <div style="color:#CD853F;">🍠 Tremor — 35 AOE+Stun</div>
       <div style="color:#00FA9A;">🍈 Sanctum — Swap HP</div>
+      <div style="color:#FFD700;">🐲 Dragon — +MaxHP + AOE</div>
+      <div style="color:#B088FF;">🌕 Eclipse — Immune + Boost</div>
+      <div style="color:#FF1493;">🃏 Jester — Swap Hands</div>
+      <div style="color:#F0E68C;">⚖️ Judgment — HP Compare</div>
     </div>
     <div class="div"></div>
     <p style="font-family:'Cinzel',serif;font-size:10px;color:#B088FF;letter-spacing:1.5px;margin-bottom:6px;">🌀 AURA SYSTEM (charges over rounds)</p>
@@ -2746,11 +2759,23 @@ function renderCollection() {
   const container = document.getElementById('collection-list');
   const counter = document.getElementById('deck-counter');
   if(!container) return;
-  container.innerHTML = '';
-  
+
   const allCards = getAllCards();
   const collection = currentUser.collection || [];
-  const deck = currentUser.deck || [];
+  let deck = [...(currentUser.deck || [])];
+
+  // ── AUTO-CLEANUP: Remove disabled cards from deck ──
+  const originalDeckSize = deck.length;
+  deck = deck.filter(key => !allCards[key]?.disabled);
+  
+  if (deck.length !== originalDeckSize) {
+    currentUser.deck = deck;
+    const userRef = db.ref('accounts/' + currentUser.username.toLowerCase());
+    userRef.update({ deck });
+    toast(`⚠️ ${originalDeckSize - deck.length} disabled card(s) removed from your deck (under maintenance).`);
+  }
+
+  container.innerHTML = '';
   
   const sections = {
     picked: { title: '📌 PICKED CARDS', icon: '✅', cards: [] },
@@ -2761,6 +2786,7 @@ function renderCollection() {
 
   [...new Set(collection)].forEach(key => {
     const el = allCards[key]; if(!el) return;
+    // We show all cards, but we'll mark disabled ones later in the loop
     if(deck.includes(key)) {
       sections.picked.cards.push(key);
     } else {
@@ -2783,14 +2809,29 @@ function renderCollection() {
     sec.cards.forEach(key => {
       const el = allCards[key];
       const isDeck = deck.includes(key);
+      const isDisabled = !!el.disabled;
       const div = document.createElement('div');
-      div.className = `card-item ${isDeck ? 'in-deck' : ''} rarity-${el.rarity}`;
+      div.className = `card-item ${isDeck ? 'in-deck' : ''} rarity-${el.rarity} ${isDisabled ? 'disabled-card' : ''}`;
+      
+      if (isDisabled) {
+        div.style.opacity = '0.5';
+        div.style.filter = 'grayscale(1)';
+        div.style.cursor = 'not-allowed';
+      }
+
       div.innerHTML = `
         <div class="c-icon">${el.icon}</div>
         <div class="c-name">${el.name}</div>
         <div class="c-rarity">${el.rarity}</div>
+        ${isDisabled ? '<div style="position:absolute;bottom:5px;right:5px;background:var(--danger);color:white;font-size:8px;padding:2px 5px;border-radius:4px;font-weight:bold;">MAINTENANCE</div>' : ''}
       `;
-      div.onclick = () => toggleDeckCard(key);
+      
+      // Add Tooltip / Preview events
+      div.title = el.desc; // Native tooltip fallback
+      attachPreviewEvents(div, key);
+
+      if (!isDisabled) div.onclick = () => toggleDeckCard(key);
+      else div.onclick = () => toast('⚠️ This card is currently under maintenance.');
       container.appendChild(div);
     });
   });
@@ -2918,8 +2959,8 @@ async function buyPack() {
 
   const roll = Math.random();
   let rarity = 'base';
-  if (roll < 0.10) rarity = 'fruit';
-  else if (roll < 0.15) rarity = 'rare';
+  if (roll < 0.02) rarity = 'fruit';
+  else if (roll < 0.05) rarity = 'rare';
   
   // Filter by rarity in the non-default pool
   let rarityPool = pool.filter(k => all[k].rarity === rarity);
@@ -2956,7 +2997,7 @@ async function buyPack5() {
   
   for (let i = 0; i < 5; i++) {
     const roll = Math.random();
-    let rarity = roll < 0.10 ? 'fruit' : (roll < 0.15 ? 'rare' : 'base');
+    let rarity = roll < 0.02 ? 'fruit' : (roll < 0.05 ? 'rare' : 'base');
     let rarityPool = pool.filter(k => all[k].rarity === rarity);
     if (rarityPool.length === 0) rarityPool = pool;
     const wonKey = rarityPool[Math.floor(Math.random() * rarityPool.length)];
@@ -3161,10 +3202,8 @@ const RARE_ELEMENTS = {
   eruption:    { icon:'🌋', name:'Eruption',     color:'#FF4500', baseDmg:30, effect:'aoe_burn', effectVal:5, desc:'30 DMG + Burn ALL enemies', rare:true, rarity:'rare' },
   mirrorimage: { icon:'🌀', name:'Mirror Image', color:'#87CEEB', baseDmg:0,  effect:'reflect_all', effectVal:0, desc:'Reflect attacks & debuffs (1 r)', rare:true, rarity:'rare' },
   overgrowth:  { icon:'🌿', name:'Overgrowth',   color:'#32CD32', baseDmg:0,  effect:'heal_shield', effectVal:25, desc:'Heal 25 HP + 15 Shield', rare:true, rarity:'rare' },
-  timewarp:    { icon:'⏳', name:'Time Warp',    color:'#DA70D6', baseDmg:0,  effect:'warp', effectVal:0, desc:'Cleanse + Force same card', rare:true, rarity:'rare' },
-};
-
-// ── CURSED FRUIT CARDS (Ultra Rare — 4% spawn chance) ──
+  timewarp:    { icon:'⏳', name:'Time Warp',    color:'#DA70D6', baseDmg:0,  effect:'cleanse_shield', effectVal:45, desc:'Cleanse + 45 HP Shield', rare:true, rarity:'rare'  },
+  };// ── CURSED FRUIT CARDS (Ultra Rare — 4% spawn chance) ──
 const CURSED_FRUITS = {
   embersoul:   { icon:'🍑', name:'Embersoul Fruit',    color:'var(--embersoul)', baseDmg:20, effect:'chainburn', effectVal:0, desc:'Burn spreads on kill!', rare:true, cursed:true, rarity:'fruit' },
   glacialcurse:{ icon:'🍵', name:'Glacial Curse Fruit', color:'var(--glacial)',   baseDmg:0,  effect:'freeze',   effectVal:2, desc:'Freeze target 2 rounds', rare:true, cursed:true, rarity:'fruit' },
@@ -4156,10 +4195,11 @@ function randCard(pid = null){
   const p = gameState?.players?.[targetId];
   const deck = p?.deck || currentUser?.deck || DEFAULT_DECK;
   const banned = gameState?.draft?.bans?.map(b => b.elementKey) || window._currentBannedKeys || [];
-  const valid = deck.filter(k => !banned.includes(k));
+  // Exclude banned cards AND disabled cards
+  const valid = deck.filter(k => !banned.includes(k) && !getEl(k)?.disabled);
 
   if (valid.length === 0) {
-    const keys = Object.keys(ELEMENTS);
+    const keys = Object.keys(ELEMENTS).filter(k => !getEl(k)?.disabled);
     return keys[Math.floor(Math.random() * keys.length)];
   }
 
@@ -5068,10 +5108,10 @@ async function hostStart(){
       p.ready = true;
     } else if(p.isBot) {
       p.ready = true;
-      p.role = null; // picked in draft later or assigned if skipped
+      if(draftEnabled) p.role = null; 
     } else {
       p.ready = false;
-      p.role = null;
+      if(draftEnabled) p.role = null;
     }
   });
 
@@ -6045,7 +6085,10 @@ function startHeroDraftTimer(data){
           const fd=fresh.draft||{};
           const pickOrder=fd.pickOrder||[];
           const pickTurnIdx=fd.pickTurnIdx||0;
-          if(pickTurnIdx>=(data.draft?.pickTurnIdx||0)+1) return; // already picked
+          
+          // Ensure we haven't already moved past this turn index
+          if(pickTurnIdx > (draft.pickTurnIdx || 0)) return; 
+          
           const pid=pickOrder[pickTurnIdx];
           const takenRoles=(fd.picks||[]).map(p=>p.role);
           const available=Object.keys(ROLES).filter(r=>!takenRoles.includes(r));
@@ -6071,20 +6114,21 @@ async function submitHeroPick(data){
   if(takenRoles.includes(heroPickSelected)){ toast('⚠️ Hero already picked!'); return; }
 
   playSfx('cast');
-  // Apply role to player in Firebase
-  await roomRef.child('players/'+myId+'/role').set(heroPickSelected);
-
   const newPicks=[...picks,{playerId:myId,role:heroPickSelected}];
   const newIdx=pickTurnIdx+1;
   const isDone=newIdx>=pickOrder.length;
+  const pickedRole = heroPickSelected;
   heroPickSelected=null;
 
-  await roomRef.child('draft').update({
-    picks:newPicks,
-    pickTurnIdx:newIdx,
-    timerEnd: isDone?null:Date.now()+HERO_PICK_TIMER_SECS*1000
-  });
-  toast(`⚔️ ${ROLES[newPicks[newPicks.length-1].role]?.icon} Picked!`);
+  // Apply both updates atomically
+  const updates = {};
+  updates[`players/${myId}/role`] = pickedRole;
+  updates['draft/picks'] = newPicks;
+  updates['draft/pickTurnIdx'] = newIdx;
+  updates['draft/timerEnd'] = isDone ? null : Date.now() + HERO_PICK_TIMER_SECS * 1000;
+  
+  await roomRef.update(updates);
+  toast(`⚔️ ${ROLES[pickedRole]?.icon} Picked!`);
 }
 
 // ── Submit hero pick for another player (host auto-pick / bot) ──
@@ -6095,6 +6139,14 @@ async function submitHeroPickFor(pid, role, data){
   const pickOrder=draft.pickOrder||[];
   const pickTurnIdx=draft.pickTurnIdx||0;
   if(pickOrder[pickTurnIdx]!==pid) return;
+
+  // CRITICAL: Check if player already has a role set (manual pick beat auto pick)
+  const p = data.players?.[pid];
+  if (p && p.role && p.role !== 'strawhat') {
+     console.log('Skipping auto-pick for', pid, 'as they already have role', p.role);
+     return;
+  }
+
   const takenRoles=picks.map(p=>p.role);
   if(takenRoles.includes(role)){
     // Pick different
@@ -6102,16 +6154,18 @@ async function submitHeroPickFor(pid, role, data){
     if(!available.length) return;
     role=available[0];
   }
-  // Apply role to player
-  await roomRef.child('players/'+pid+'/role').set(role);
+  
   const newPicks=[...picks,{playerId:pid,role}];
   const newIdx=pickTurnIdx+1;
   const isDone=newIdx>=pickOrder.length;
-  await roomRef.child('draft').update({
-    picks:newPicks,
-    pickTurnIdx:newIdx,
-    timerEnd: isDone?null:Date.now()+HERO_PICK_TIMER_SECS*1000
-  });
+
+  const updates = {};
+  updates[`players/${pid}/role`] = role;
+  updates['draft/picks'] = newPicks;
+  updates['draft/pickTurnIdx'] = newIdx;
+  updates['draft/timerEnd'] = isDone ? null : Date.now() + HERO_PICK_TIMER_SECS * 1000;
+  
+  await roomRef.update(updates);
 }
 
 
@@ -6510,7 +6564,7 @@ function renderConfirmButton(){
     ? allPlayers.filter(p=>p.id!==myId&&p.alive&&p.team!==me.team)
     : allPlayers.filter(p=>p.id!==myId&&p.alive);
   const needTarget=aliveEnemies.length>1;
-  const selfCards=['water','holy','earth','barrier','alchemy'];
+  const selfCards=['water','holy','earth','barrier','alchemy','timewarp','mirrorimage'];
   const cursedAoeCards=['tremortyrant','meteor'];
   const cardKey=me.hand?.[selectedCard];
   const isSelfCard=selfCards.includes(cardKey)||cursedAoeCards.includes(cardKey)||getEl(cardKey)?.effect==='aoe';
@@ -6522,10 +6576,10 @@ function renderConfirmButton(){
   if(el) btn.textContent=`⚔️ Unleash ${el.icon} ${el.name}!${burstTag}${auraTag}`;
 }
 
-async function confirmAction(){
+async function confirmAction(bypassCheck = false){
   const me=gameState.players[myId]; if(!me?.alive) return;
-  if(!window._eclipseMode&&!window._lastritesMode&&(actionSubmitted||selectedCard===null)) return;
-  if(actionSubmitted) return;
+  if(!window._eclipseMode&&!window._lastritesMode&&!bypassCheck&&(actionSubmitted||selectedCard===null)) return;
+  if(actionSubmitted && !bypassCheck) return;
 
   // ── Eclipse Strike: target already chosen via tap ──
   if(window._eclipseMode&&me.role==='phantomblade'){
@@ -6583,7 +6637,7 @@ async function confirmAction(){
   }
 
   const cardKey=me.hand[selectedCard];
-  const selfCards=['water','holy','earth','barrier','alchemy'];
+  const selfCards=['water','holy','earth','barrier','alchemy','timewarp','mirrorimage'];
   const cursedAoeCards=['tremortyrant','meteor'];
   if(!target&&!selfCards.includes(cardKey)&&!cursedAoeCards.includes(cardKey)&&getEl(cardKey)?.effect!=='aoe'){
     toast('⚠️ Select a target first!'); return;
@@ -6658,24 +6712,6 @@ function renderHand(data){
     stunBanner.style.display = 'none';
   }
 
-  // ── Time Warp: Auto-pick forced card ──
-  const forcedCard = data.forcedCards?.[myId];
-  if (forcedCard && !actionSubmitted && phase === 'choose' && !isDisabled) {
-    const cardIdx = (me.hand || []).indexOf(forcedCard);
-    if (cardIdx >= 0) {
-      selectedCard = cardIdx;
-      const isTeam = data.config?.mode === 'team';
-      const enemies = isTeam
-        ? Object.values(data.players).filter(p=>p.id!==myId&&p.alive&&p.team!==me.team)
-        : Object.values(data.players).filter(p=>p.id!==myId&&p.alive);
-      if (enemies.length > 0) {
-        selectedTarget = enemies[Math.floor(Math.random()*enemies.length)].id;
-      }
-      confirmAction(); 
-      toast(`⏳ TIME WARP! Forced to use ${getEl(forcedCard)?.icon||''} ${forcedCard}!`);
-    }
-  }
-
   // Status text
   let statusText = actionDone ? '✅ Action submitted!' : 'Choose a card to play';
   if (!actionDone && ultActive && me.role === 'blademaster') {
@@ -6696,18 +6732,27 @@ function renderHand(data){
     const isStaged = window._tridentCards?.some(c => c.idx === i);
     const isSelected = selectedCard === i || isStaged;
 
-    // When stunned/frozen: only Holy is enabled (if player has it)
+    // When stunned/frozen: only Holy and Time Warp are enabled (if player has it)
     const isHoly = key === 'holy';
-    const blockedByStun = isDisabled && !isHoly;
-    const disabled = actionDone || phase !== 'choose' || blockedByStun;
+    const isTimeWarp = key === 'timewarp';
+    const isCardDisabled = !!el.disabled;
+    const blockedByStun = isDisabled && !isHoly && !isTimeWarp;
+    const disabled = actionDone || phase !== 'choose' || blockedByStun || isCardDisabled;
 
     const div = document.createElement('div');
-    // Highlight holy as the only option when stunned
-    const holyGlow = isDisabled && isHoly && !actionDone;
-    div.className = `el-card bg-${key} ${isSelected?'selected':''} ${disabled?'disabled':''} ${el.rare?'rare':''}`;
-    if (holyGlow) {
-      div.style.boxShadow = '0 0 20px #FFE566, 0 0 40px rgba(255,229,102,0.4)';
-      div.style.borderColor = '#FFE566';
+    // Highlight holy/timewarp as the only option when stunned
+    const specialGlow = isDisabled && (isHoly || isTimeWarp) && !actionDone && !isCardDisabled;
+    div.className = `el-card bg-${key} ${isSelected?'selected':''} ${disabled?'disabled':''} ${el.rare?'rare':''} ${isCardDisabled?'card-maintenance':''}`;
+    if (isCardDisabled) {
+      div.style.opacity = '0.3';
+      div.style.filter = 'grayscale(1)';
+      div.style.cursor = 'not-allowed';
+      div.title = 'Card under maintenance';
+    } else if (specialGlow) {
+      const glowColor = isHoly ? '#FFE566' : '#DA70D6';
+      const glowRgba = isHoly ? 'rgba(255,229,102,0.4)' : 'rgba(218,112,214,0.4)';
+      div.style.boxShadow = `0 0 20px ${glowColor}, 0 0 40px ${glowRgba}`;
+      div.style.borderColor = glowColor;
       div.style.animation = 'glow 1s ease-in-out infinite';
     } else if (isStaged) {
       div.style.boxShadow = '0 0 20px #FFD700, inset 0 0 10px #FFD700';
@@ -7241,26 +7286,45 @@ async function submitBotActions(data){
   const cfg = data.config || {};
 
   const isTeamMode = cfg.mode==='team';
+  const forcedCards = data.forcedCards || {};
   const bots = Object.values(players).filter(p=>p.isBot && p.alive && !actions[p.id]);
   if(!bots.length) return;
 
   const updates = {};
   bots.forEach(bot=>{
-    // Build the "enemies" map relevant to this bot
-    const allP = players;
-    const botTeam = bot.team;
-    const relevantEnemies = isTeamMode && botTeam
-      ? Object.values(allP).filter(p=>p.alive&&p.team!==botTeam&&!p.isSpectator)
-      : Object.values(allP).filter(p=>p.alive&&p.id!==bot.id&&!p.isSpectator);
+    const forced = forcedCards[bot.id];
+    let decision;
+    if (forced && (bot.hand || []).includes(forced)) {
+      const idx = bot.hand.indexOf(forced);
+      const isSelf = ['water','holy','earth','barrier','alchemy','timewarp','mirrorimage','tremortyrant','meteor'].includes(forced) || getEl(forced)?.effect === 'aoe';
+      const botTeam = bot.team;
+      const enemies = isTeamMode && botTeam
+        ? Object.values(players).filter(p=>p.alive&&p.team!==botTeam&&!p.isSpectator)
+        : Object.values(players).filter(p=>p.alive&&p.id!==bot.id&&!p.isSpectator);
+      const target = isSelf ? 'self' : (enemies.length ? enemies[Math.floor(Math.random()*enemies.length)].id : 'self');
+      decision = { card: forced, cardIdx: idx, target: target };
+    } else {
+      // Build the "enemies" map relevant to this bot
+      const allP = players;
+      const botTeam = bot.team;
+      const relevantEnemies = isTeamMode && botTeam
+        ? Object.values(allP).filter(p=>p.alive&&p.team!==botTeam&&!p.isSpectator)
+        : Object.values(allP).filter(p=>p.alive&&p.id!==bot.id&&!p.isSpectator);
 
-    const decision = botDecideAction(bot, allP, bannedKeys, cfg, relevantEnemies);
+      decision = botDecideAction(bot, allP, bannedKeys, cfg, relevantEnemies);
+    }
     if(!decision) return;
 
     let tgt = decision.target;
     if(tgt !== 'self'){
-      const tp = allP[tgt];
+      const tp = players[tgt];
+      const botTeam = bot.team;
       const valid = tp && tp.alive && (isTeamMode ? tp.team!==botTeam : tp.id!==bot.id);
       if(!valid){
+        const botTeam = bot.team;
+        const relevantEnemies = isTeamMode && botTeam
+          ? Object.values(players).filter(p=>p.alive&&p.team!==botTeam&&!p.isSpectator)
+          : Object.values(players).filter(p=>p.alive&&p.id!==bot.id&&!p.isSpectator);
         const fallback = relevantEnemies[0];
         tgt = fallback ? fallback.id : 'self';
       }
@@ -7285,8 +7349,13 @@ function checkAllActed(d){
   if(isHost){
     const botsUnacted = alive.filter(p=>p.isBot && !actions.includes(p.id));
     if(botsUnacted.length > 0){
+      const forcedCards = d.forcedCards || {};
+      const hasForced = botsUnacted.some(p => {
+        const f = forcedCards[p.id];
+        return f && (p.hand || []).includes(f);
+      });
       const hasEnstain = botsUnacted.some(p=>p.botDifficulty==='enstain'||p.botDifficulty==='neverlost');
-      const delay = hasEnstain ? 200 : 800 + Math.floor(Math.random()*1200);
+      const delay = hasForced ? 100 : (hasEnstain ? 200 : 800 + Math.floor(Math.random()*1200));
       setTimeout(()=>{
         roomRef.once('value').then(snap=>{
           const fresh = snap.val();
@@ -7349,6 +7418,9 @@ async function resolveRound(data){
     const cfg = data.config || {hp:100, timer:20, cards:5, mode:'ffa'};
     const isTeam = cfg.mode === 'team';
     const logs = [];
+    const aliveIds = Object.values(players).filter(p=>p.alive).map(p=>p.id);
+    const pendingForcedCards = {};
+    const chainBurnPending = []; // Track chain burn sources for post-loop processing
     let eliminatedOrder = [...(data.eliminatedOrder || [])];
 
     logs.push({msg:`⚔️ — Round ${roundNum} Results —`, type:'system'});
@@ -7452,23 +7524,15 @@ async function resolveRound(data){
         attacker.hp = clamp((attacker.hp||0)+20, 0, attacker.maxHp||100);
         logs.push({msg:`✨ ${attacker.name} cleansed & healed 20 HP!`,type:'heal'});
       } else {
-        // Time Warp: Cleanse all debuffs same as holy
-        attacker.statusEffects = attacker.statusEffects||{};
-        ['burn','stun','freeze','poison'].forEach(k=>attacker.statusEffects[k]=0);
-        logs.push({msg:`⏳ ${attacker.name} used Time Warp: Cleansed all debuffs!`,type:'rare'});
-
-        // Time Warp specific: Force enemies to use same card next round
-        const enemies = isTeam ? aliveIds.filter(eid=>players[eid].team!==attacker.team) : aliveIds.filter(eid=>eid!==pid);
-        enemies.forEach(eid => {
-          if (actions[eid] && actions[eid].card !== 'skip') {
-            pendingForcedCards[eid] = actions[eid].card;
-          }
-        });
+        // Time Warp: Cleanse all debuffs + 45 Shield
+        attacker.statusEffects = { shield: (attacker.statusEffects?.shield||0) + 45 };
+        logs.push({msg:`⏳ ${attacker.name} used Time Warp: Cleansed & gained 45 Shield!`,type:'rare'});
       }
 
       // Both Holy and Time Warp allow the player to act even if they were stunned at start
       stunnedAtStart.delete(pid);
     });
+
     // STEP 5.5: Sovereign Aura — collect nullified targets
     const sovereignNullified = new Set(); // set of player IDs whose card is nullified this round
     Object.entries(actions).forEach(([pid, act]) => {
@@ -7482,14 +7546,14 @@ async function resolveRound(data){
     });
 
     // STEP 6: Offensive actions
-    const aliveIds = Object.values(players).filter(p=>p.alive).map(p=>p.id);
-    // Track chain burn sources for post-loop processing
-    const chainBurnPending = []; // {attacker, targetId, burnVal}
-    const pendingForcedCards = {};
-
     Object.entries(actions).forEach(([pid, act]) => {
       const utilityCards = ['earth','barrier','alchemy'];
       const attacker = players[pid]; if(!attacker||!attacker.alive) return;
+
+      // Update lastCard if this is a real card (not skip/holy/timewarp/etc)
+      if (act.card && !['skip','holy','timewarp','cover','aegis','stormburglar','ironfortress','eclipsestrike','elementalchain','lastrites'].includes(act.card)) {
+        attacker.lastCard = act.card;
+      }
 
       // Skip farsight (no-attack action)
       if (act.card === 'farsight') return;
@@ -7737,8 +7801,14 @@ async function resolveRound(data){
           attacker.dmgDealt = (attacker.dmgDealt||0)+fd;
           tgt.dmgReceived = (tgt.dmgReceived||0)+fd;
           logs.push({msg:`${el.icon} ${el.name} → ${t.name}: ${fd} dmg${redir!==eid?` (covered by ${players[redir]?.name})`:''}!`,type:'dmg'});
-          if (act.card === 'tremortyrant') { tgt.statusEffects=tgt.statusEffects||{}; tgt.statusEffects.stun=2; }
-          if (act.card === 'eruption') { tgt.statusEffects=tgt.statusEffects||{}; tgt.statusEffects.burn=(tgt.statusEffects.burn||0)+2; }
+          
+          const isProtected = (actions[redir]?.card === 'holy' || actions[redir]?.card === 'timewarp');
+          if (isProtected) {
+            logs.push({msg:`✨ ${tgt.name} cleansed incoming debuffs!`,type:'system'});
+          } else {
+            if (act.card === 'tremortyrant') { tgt.statusEffects=tgt.statusEffects||{}; tgt.statusEffects.stun=2; }
+            if (act.card === 'eruption') { tgt.statusEffects=tgt.statusEffects||{}; tgt.statusEffects.burn=(tgt.statusEffects.burn||0)+2; }
+          }
         });
         if (act.card === 'tremortyrant') logs.push({msg:`🍠 TREMOR TYRANT — all enemies stunned!`,type:'cursed'});
         if (act.card === 'eruption') logs.push({msg:`🌋 ERUPTION — all enemies burned!`,type:'rare'});
@@ -7834,13 +7904,13 @@ async function resolveRound(data){
       const redirStr=finalTargetId!==act.target?` [→${finalTarget.name}]`:'';
       logs.push({msg:`${el.icon} ${attacker.name} → ${defender.name}: ${finalDmg} dmg${advStr}${coverStr}${redirStr}`,type:'dmg'});
 
-      const holyBlock=actions[act.target]?.card==='holy';
+      const isProtected = (actions[finalTargetId]?.card === 'holy' || actions[finalTargetId]?.card === 'timewarp');
 
       // Standard element effects
-      if(act.card==='thunder'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed stun!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.stun=2;}}
-      if(act.card==='fire'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed burn!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.burn=2;}}
-      if(act.card==='ice'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed freeze!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.freeze=2;}}
-      if(act.card==='poison'){if(holyBlock)logs.push({msg:`✨ ${finalTarget.name} cleansed poison!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.poison=4;logs.push({msg:`🧪 ${finalTarget.name} was poisoned!`,type:'dmg'});}}
+      if(act.card==='thunder'){if(isProtected)logs.push({msg:`✨ ${finalTarget.name} cleansed stun!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.stun=2;}}
+      if(act.card==='fire'){if(isProtected)logs.push({msg:`✨ ${finalTarget.name} cleansed burn!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.burn=2;}}
+      if(act.card==='ice'){if(isProtected)logs.push({msg:`✨ ${finalTarget.name} cleansed freeze!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.freeze=2;}}
+      if(act.card==='poison'){if(isProtected)logs.push({msg:`✨ ${finalTarget.name} cleansed poison!`,type:'system'});else{finalTarget.statusEffects=finalTarget.statusEffects||{};finalTarget.statusEffects.poison=4;logs.push({msg:`🧪 ${finalTarget.name} was poisoned!`,type:'dmg'});}}
       if(act.card==='sandstorm'){
         const others = isTeam ? aliveIds.filter(eid=>players[eid].team!==attacker.team && eid!==finalTargetId) : aliveIds.filter(eid=>eid!==pid && eid!==finalTargetId);
         others.forEach(oid => {
