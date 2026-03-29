@@ -2956,7 +2956,7 @@ async function buyPack5() {
   
   for (let i = 0; i < 5; i++) {
     const roll = Math.random();
-    let rarity = roll < 0.15 ? 'fruit' : (roll < 0.20 ? 'rare' : 'base');
+    let rarity = roll < 0.10 ? 'fruit' : (roll < 0.15 ? 'rare' : 'base');
     let rarityPool = pool.filter(k => all[k].rarity === rarity);
     if (rarityPool.length === 0) rarityPool = pool;
     const wonKey = rarityPool[Math.floor(Math.random() * rarityPool.length)];
