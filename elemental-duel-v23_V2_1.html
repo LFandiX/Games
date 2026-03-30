@@ -1550,6 +1550,15 @@ https://creativecommons.org/licenses/by/4.0/ -->
       <input id="auth-reg-user" type="text" placeholder="Choose a username (3–20 chars)" maxlength="20" autocomplete="username"/>
       <input id="auth-reg-pass" type="password" placeholder="Password (min 6 chars)" maxlength="64" autocomplete="new-password"/>
       <input id="auth-reg-pass2" type="password" placeholder="Confirm password" maxlength="64" autocomplete="new-password"/>
+      
+      <!-- Terms and Conditions Checkbox -->
+      <div style="display:flex; align-items:flex-start; gap:10px; padding: 4px 8px; font-size: 13px; color: var(--muted);">
+        <input id="auth-reg-terms" type="checkbox" style="width: auto; margin-top: 4px; cursor: pointer;"/>
+        <label for="auth-reg-terms" style="cursor: pointer; line-height: 1.4;">
+          Saya setuju dengan <a href="terms-and-conditions.html" target="_blank" style="color: var(--fire); text-decoration: underline;">Syarat dan Ketentuan</a> penggunaan layanan Elemental Duel, termasuk perlindungan data.
+        </label>
+      </div>
+
       <div id="auth-reg-error" class="auth-error"></div>
       <button class="btn btn-primary" onclick="registerUser()">✨ Create Account</button>
     </div>
@@ -2206,6 +2215,7 @@ async function registerUser() {
   const username = document.getElementById('auth-reg-user').value.trim();
   const pass = document.getElementById('auth-reg-pass').value;
   const pass2 = document.getElementById('auth-reg-pass2').value;
+  const termsChecked = document.getElementById('auth-reg-terms').checked;
   const errEl = document.getElementById('auth-reg-error');
   errEl.style.color = 'var(--danger)';
   errEl.textContent = '';
@@ -2214,6 +2224,7 @@ async function registerUser() {
   if (!/^[a-zA-Z0-9_]+$/.test(username)) { errEl.textContent = '⚠️ Username: huruf, angka, _ saja.'; return; }
   if (pass.length < 6) { errEl.textContent = '⚠️ Password minimal 6 karakter.'; return; }
   if (pass !== pass2) { errEl.textContent = '⚠️ Password tidak cocok.'; return; }
+  if (!termsChecked) { errEl.textContent = '⚠️ Anda harus menyetujui Syarat dan Ketentuan.'; return; }
 
   const btn = document.querySelector('#auth-form-register .btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
