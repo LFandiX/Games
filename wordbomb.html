@@ -40,6 +40,31 @@
             background-size: 550px 550px, 350px 350px, 250px 250px;
             animation: backgroundDrift 100s linear infinite;
         }
+        /* Animasi Textbox Salah (Merah & Bergetar) */
+        .input-error {
+            animation: shakeError 0.4s ease-in-out;
+            border-color: #FF2D55 !important;
+            color: #FF2D55 !important;
+            box-shadow: 0 0 15px rgba(255, 45, 85, 0.4), inset 0 0 10px rgba(255, 45, 85, 0.2) !important;
+        }
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* Animasi Textbox Benar (Hijau & Membesar Sedikit) */
+        .input-success {
+            animation: pulseSuccess 0.4s ease-out;
+            border-color: #00E5A0 !important;
+            color: #00E5A0 !important;
+            box-shadow: 0 0 15px rgba(0, 229, 160, 0.4), inset 0 0 10px rgba(0, 229, 160, 0.2) !important;
+        }
+        @keyframes pulseSuccess {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
         @keyframes backgroundDrift { to { background-position: -550px 0, -310px 60px, -120px 270px; } }
         .timer-ring { stroke-dasharray: 653; transition: stroke-dashoffset 1s linear, stroke 0.3s ease; }
         .bomb-pulse { animation: bombPulse 1.5s infinite alternate; }
@@ -392,7 +417,26 @@
                 wordInput.value = '';
             }
         }
+        // FUNGSI ANIMASI INPUT BOX
+        function triggerInputAnim(type) {
+            const inputField = document.getElementById('game-input');
+            
+            // Hapus class jika masih nyangkut
+            inputField.classList.remove('input-error', 'input-success');
+            
+            // Trik "void offsetWidth" untuk mereset animasi (force reflow) agar bisa jalan berkali-kali
+            void inputField.offsetWidth; 
 
+            if (type === 'error') {
+                inputField.classList.add('input-error');
+                // Hapus class setelah animasi selesai (400ms)
+                setTimeout(() => inputField.classList.remove('input-error'), 400);
+            } else if (type === 'success') {
+                inputField.classList.add('input-success');
+                setTimeout(() => inputField.classList.remove('input-success'), 400);
+            }
+        }
+        // CORE MECHANICS
         // CORE MECHANICS
         document.getElementById('word-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -402,28 +446,50 @@
 
             if(!word) return;
             
-            // VALIDASI: Minimal 3 huruf
+            // VALIDASI LOKAL (ERROR)
             if(word.length < 3) {
+                triggerInputAnim('error');
                 showCustomToast("Too short! Min 3 letters.", 'warning');
                 return;
             }
+            if(!word.startsWith(prefix)) { 
+                triggerInputAnim('error');
+                showCustomToast(`Start with "${prefix.toUpperCase()}"!`, 'warning'); 
+                return; 
+            }
+            if(roomData.used_words && roomData.used_words[word]) { 
+                triggerInputAnim('error');
+                showCustomToast("Word already used!", 'error'); 
+                return; 
+            }
 
-            if(!word.startsWith(prefix)) { showCustomToast(`Start with "${prefix.toUpperCase()}"!`, 'warning'); return; }
-            if(roomData.used_words && roomData.used_words[word]) { showCustomToast("Word already used!", 'error'); return; }
-
+            // Kunci input sementara nunggu API
             inputField.setAttribute('disabled', 'true');
+            
             try {
                 const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+                
                 if(res.status === 404) {
+                    // SALAH (Kata tidak ada)
+                    inputField.removeAttribute('disabled'); 
+                    triggerInputAnim('error');
                     showCustomToast("Invalid English word!", 'error');
-                    inputField.removeAttribute('disabled'); inputField.focus();
+                    inputField.focus(); // Fokuskan kembali biar pemain bisa langsung hapus & ketik ulang
                 } else if(res.ok) {
+                    // BENAR
+                    triggerInputAnim('success');
                     showCustomToast("Valid!", 'success');
-                    inputField.value = '';
-                    passTurn(word);
+                    
+                    // Beri jeda 300ms biar efek hijaunya kelihatan sebelum input dikosongkan dan pindah turn
+                    setTimeout(() => {
+                        inputField.value = '';
+                        passTurn(word);
+                    }, 300);
                 }
             } catch(err) {
-                showCustomToast("API Network Error.", 'error'); inputField.removeAttribute('disabled');
+                inputField.removeAttribute('disabled');
+                triggerInputAnim('error');
+                showCustomToast("API Network Error.", 'error'); 
             }
         });
 
