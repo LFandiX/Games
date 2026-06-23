@@ -184,8 +184,7 @@
             </div>
         </div>
 
-        <div id="game-players-grid" class="flex flex-wrap justify-center gap-3 mt-2">
-            </div>
+        <div id="game-players-grid" class="flex flex-wrap justify-center gap-3 mt-2"></div>
     </div>
 
     <div id="screen-leaderboard" class="hidden w-full max-w-md bg-surface/90 p-8 rounded-2xl border border-surfaceElevated shadow-2xl backdrop-blur-md flex flex-col gap-6 text-center">
@@ -197,8 +196,7 @@
         <div class="bg-bgDark border border-surfaceElevated rounded-xl p-4">
             <h2 class="text-[10px] text-textMuted font-bold tracking-widest mb-3">LAST MAN STANDING</h2>
             <div id="winner-display" class="font-display text-3xl font-bold text-primary mb-4">🏆 ...</div>
-            <ul id="leaderboard-list" class="space-y-2 text-sm font-mono text-left max-h-[200px] overflow-y-auto pr-2">
-                </ul>
+            <ul id="leaderboard-list" class="space-y-2 text-sm font-mono text-left max-h-[200px] overflow-y-auto pr-2"></ul>
         </div>
 
         <div class="pt-4 border-t border-surfaceElevated flex flex-col gap-3">
@@ -209,7 +207,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, runTransaction, onDisconnect, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         // GANTI DENGAN CONFIG FIREBASE MILIKMU
         const firebaseConfig = {
@@ -234,6 +232,7 @@
         let currentRoomId = '';
         let isHost = false;
         let roomData = null;
+        let previousPlayersState = {}; 
         let localTimerInterval = null;
         let currentBaseTime = 20; 
         let lastRenderedChain = ''; 
@@ -319,6 +318,15 @@
         loadLocalDictionary();
 
         // ========================
+        // KELUAR TAB (BEFOREUNLOAD)
+        // ========================
+        window.addEventListener("beforeunload", () => {
+            if (currentRoomId && myId) {
+                update(ref(db, `rooms/${currentRoomId}/players/${myId}`), { is_afk: true, lives: 0, is_host: false });
+            }
+        });
+
+        // ========================
         // ROOM & LOBBY LOGIC
         // ========================
         function setupUser() {
@@ -333,13 +341,16 @@
             isHost = true;
             currentRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
             
-            set(ref(db, `rooms/${currentRoomId}`), {
+            const roomRef = ref(db, `rooms/${currentRoomId}`);
+            set(roomRef, {
                 status: 'waiting_players',
                 current_turn: myId,
                 current_prefix: alphabet[Math.floor(Math.random() * alphabet.length)],
                 bomb_timer: 20, turn_count: 0, winner: '', word_chain: '', 
-                players: { [myId]: { name: myName, lives: 2, is_host: true, order: 0 } }
+                players: { [myId]: { name: myName, lives: 2, is_host: true, order: 0, is_afk: false } }
             }).then(() => {
+                const myPlayerRef = ref(db, `rooms/${currentRoomId}/players/${myId}`);
+                onDisconnect(myPlayerRef).update({ is_afk: true, lives: 0, is_host: false });
                 listenToRoom(); switchScreen('waiting');
             });
         });
@@ -357,11 +368,14 @@
                     if (pCount >= 10) return; 
                     
                     if (!currentData.players) currentData.players = {};
-                    currentData.players[myId] = { name: myName, lives: 2, is_host: false, order: pCount };
+                    currentData.players[myId] = { name: myName, lives: 2, is_host: false, order: pCount, is_afk: false };
                 }
                 return currentData;
             }).then((result) => {
                 if(result.committed && result.snapshot.val().status === 'waiting_players') {
+                    const myPlayerRef = ref(db, `rooms/${currentRoomId}/players/${myId}`);
+                    onDisconnect(myPlayerRef).update({ is_afk: true, lives: 0, is_host: false });
+                    
                     listenToRoom(); switchScreen('waiting');
                 } else {
                     showCustomToast('Room full or unavailable.', 'error');
@@ -371,11 +385,85 @@
 
         function listenToRoom() {
             onValue(ref(db, `rooms/${currentRoomId}`), (snapshot) => {
-                roomData = snapshot.val();
-                if(!roomData) return;
+                const newData = snapshot.val();
+                
+                if(!newData) {
+                    clearInterval(localTimerInterval);
+                    showCustomToast("Room closed or connection lost.", "error");
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
 
+                // ==========================================
+                // TOAST NOTIFICATIONS (AFK & HOST TRANSFER)
+                // ==========================================
+                if (newData.players && Object.keys(previousPlayersState).length > 0) {
+                    for (let pid in newData.players) {
+                        // Afk Toast
+                        if (newData.players[pid].is_afk && !previousPlayersState[pid]?.is_afk) {
+                            showCustomToast(`🚨 ${newData.players[pid].name} went AFK!`, 'warning');
+                        }
+                        // Host Transfer Toast
+                        if (newData.players[pid].is_host && !previousPlayersState[pid]?.is_host) {
+                            showCustomToast(`👑 ${newData.players[pid].name} is now the Host!`, 'success');
+                        }
+                    }
+                }
+                previousPlayersState = JSON.parse(JSON.stringify(newData.players || {}));
+                roomData = newData;
+
+                // ==========================================
+                // HOST MIGRATION (SERVER-LESS HANDOVER)
+                // ==========================================
+                const playersArrForHost = Object.entries(roomData.players).map(([id, p]) => ({id, ...p})).sort((a,b)=>a.order - b.order);
+                const activeHost = playersArrForHost.find(p => p.is_host && !p.is_afk);
+
+                // Jika tidak ada host aktif, serahkan ke pemain tertua yang tidak AFK
+                if (!activeHost) {
+                    const eligibleHost = playersArrForHost.find(p => !p.is_afk);
+                    if (eligibleHost && eligibleHost.id === myId && !isHost) {
+                        isHost = true;
+                        const updates = {};
+                        updates[`rooms/${currentRoomId}/players/${myId}/is_host`] = true;
+                        
+                        // Bersihkan tag host dari pemain lain
+                        for(let pid in roomData.players) {
+                            if (pid !== myId && roomData.players[pid].is_host) {
+                                updates[`rooms/${currentRoomId}/players/${pid}/is_host`] = false;
+                            }
+                        }
+                        
+                        update(ref(db), updates).then(() => {
+                            if(roomData.status === 'playing') {
+                                startHostTimerLoop(); // Lanjutkan hitungan bom yang terhenti!
+                            }
+                        });
+                    }
+                } else if (activeHost.id !== myId) {
+                    // Kalau saya bukan host, pastikan interval mati agar tidak double tick
+                    isHost = false;
+                    clearInterval(localTimerInterval); 
+                }
+
+                // UI ROUTING
                 if(roomData.status === 'waiting_players') {
                     clearInterval(localTimerInterval);
+                    
+                    let requiresCleanup = false;
+                    const cleanupUpdates = {};
+                    if (isHost) {
+                        for (let pid in roomData.players) {
+                            if (roomData.players[pid].is_afk) {
+                                cleanupUpdates[`rooms/${currentRoomId}/players/${pid}`] = null;
+                                requiresCleanup = true;
+                            }
+                        }
+                    }
+                    if (requiresCleanup) {
+                        update(ref(db), cleanupUpdates);
+                        return; 
+                    }
+
                     updateWaitingRoom();
                     switchScreen('waiting'); 
                 } else if(roomData.status === 'playing') {
@@ -393,21 +481,26 @@
 
         function updateWaitingRoom() {
             document.getElementById('display-room-id').innerText = currentRoomId;
-            const players = Object.values(roomData.players);
-            document.getElementById('player-count').innerText = players.length;
+            const players = Object.values(roomData.players || {});
+            
+            const realPlayers = players.filter(p => !p.is_afk);
+            document.getElementById('player-count').innerText = realPlayers.length;
             
             const listContainer = document.getElementById('player-list');
             listContainer.innerHTML = '';
-            players.forEach(p => {
+            realPlayers.forEach(p => {
                 const isMe = p.name === myName;
                 listContainer.innerHTML += `<li class="text-textMain border-b border-surfaceElevated pb-1 truncate ${isMe ? 'text-primary font-bold' : ''}">
                     ${isMe ? '👉 ' : ''}${p.is_host ? '👑' : '👤'} ${p.name} ${isMe ? '(You)' : ''}
                 </li>`;
             });
 
-            if(isHost && players.length >= 2) { 
+            if(isHost && realPlayers.length >= 2) { 
                 document.getElementById('btn-start-game').classList.remove('hidden');
                 document.getElementById('host-wait-msg').classList.add('hidden');
+            } else {
+                document.getElementById('btn-start-game').classList.add('hidden');
+                document.getElementById('host-wait-msg').classList.remove('hidden');
             }
         }
 
@@ -436,7 +529,6 @@
             const gameScreen = document.getElementById('screen-game');
             const targetBadge = document.getElementById('target-badge');
 
-            // NIGHTMARE MODE UI LOGIC
             if(difficulty.level === 4) {
                 gameScreen.classList.replace('border-surfaceElevated', 'border-danger');
                 gameScreen.classList.add('shadow-neon-danger');
@@ -454,7 +546,6 @@
             diffEl.innerText = difficulty.desc;
             diffEl.className = `font-mono text-sm font-bold ${difficulty.level === 4 ? 'text-danger animate-pulse shadow-neon-danger' : (difficulty.level === 3 ? 'text-primary animate-pulse' : (difficulty.level === 2 ? 'text-secondary' : 'text-success'))}`;
 
-            // Timer UI
             const timerCircle = document.getElementById('timer-circle');
             const countdownText = document.getElementById('countdown-text');
             countdownText.innerText = roomData.bomb_timer;
@@ -470,7 +561,6 @@
                 document.getElementById('bomb-graphic').classList.remove('bomb-shake');
             }
 
-            // Cards UI
             const playersArr = Object.entries(roomData.players).map(([id, p]) => ({id, ...p})).sort((a,b)=>a.order - b.order);
             const activePlayer = playersArr.find(p => p.id === roomData.current_turn);
             document.getElementById('current-player-name').innerText = activePlayer ? activePlayer.name : 'Unknown';
@@ -481,11 +571,12 @@
                 const isCurrent = p.id === roomData.current_turn;
                 const isDead = p.lives <= 0;
                 const isMe = p.id === myId;
+                const isAFK = p.is_afk; 
                 
                 grid.innerHTML += `
-                    <div class="rounded-lg p-2 text-center w-24 md:w-32 transition-all ${isCurrent ? 'bg-surfaceElevated border-2 border-primary shadow-neon-primary scale-105' : (isDead ? 'bg-bgDark border border-danger/30 opacity-40 grayscale' : 'bg-bgDark border border-surfaceElevated')}">
-                        <div class="font-display font-bold text-xs truncate ${isDead ? 'text-danger line-through' : (isMe ? 'text-primary' : 'text-textMain')}">
-                            ${isMe ? '👉 ' : ''}${p.name}
+                    <div class="rounded-lg p-2 text-center w-24 md:w-32 transition-all ${isCurrent ? 'bg-surfaceElevated border-2 border-primary shadow-neon-primary scale-105' : (isDead || isAFK ? 'bg-bgDark border border-danger/30 opacity-40 grayscale' : 'bg-bgDark border border-surfaceElevated')}">
+                        <div class="font-display font-bold text-xs truncate ${isDead || isAFK ? 'text-danger line-through' : (isMe ? 'text-primary' : 'text-textMain')}">
+                            ${isMe ? '👉 ' : ''}${p.is_host ? '👑' : ''}${p.name} ${isAFK ? '<br><span class="text-[9px] text-danger font-bold">(AFK)</span>' : ''}
                         </div>
                         <div class="flex justify-center mt-1 text-[10px]">
                             ${Array(2).fill(0).map((_, i) => i < p.lives ? '❤️' : '🖤').join('')}
@@ -494,9 +585,8 @@
                 `;
             });
 
-            // Input UI
             const wordInput = document.getElementById('game-input');
-            if(roomData.current_turn === myId && roomData.players[myId].lives > 0) {
+            if(roomData.current_turn === myId && roomData.players[myId].lives > 0 && !roomData.players[myId].is_afk) {
                 wordInput.removeAttribute('disabled');
                 wordInput.placeholder = "YOUR TURN!";
                 if(document.activeElement !== wordInput) wordInput.focus();
@@ -506,12 +596,11 @@
                 wordInput.value = '';
             }
 
-            // History Tape Render (MAX 3 WORDS FOR MOBILE)
             const historyContainer = document.getElementById('word-history-container');
             if (roomData.word_chain && roomData.word_chain !== lastRenderedChain) {
                 lastRenderedChain = roomData.word_chain;
                 const words = roomData.word_chain.split(',');
-                const displayWords = words.slice(-3); // Diubah dari -5 menjadi -3
+                const displayWords = words.slice(-3); 
                 
                 historyContainer.innerHTML = displayWords.map((w, index) => {
                     const isLatest = index === displayWords.length - 1;
@@ -531,7 +620,6 @@
             showCustomToast(msg, 'warning');
             
             const diff = calculateDifficulty();
-            // JIKA NIGHTMARE MODE: Berikan Hukuman Waktu -2s!
             if (diff.level === 4) {
                 const newTime = Math.max(0, roomData.bomb_timer - 2);
                 update(ref(db, `rooms/${currentRoomId}`), { bomb_timer: newTime });
@@ -548,14 +636,12 @@
             if(!word) return;
             if(!localDictionary) { showCustomToast("Dictionary loading...", 'warning'); return; }
 
-            // Pengecekan dengan sistem penalty Nightmare
             if(word.length < 3) { handleWrongAnswer("Too short! Min 3 letters."); return; }
             if(!word.startsWith(prefix)) { handleWrongAnswer(`Start with "${prefix.toUpperCase()}"!`); return; }
             if(roomData.used_words && roomData.used_words[word]) { handleWrongAnswer("Word already used!"); return; }
 
             inputField.setAttribute('disabled', 'true');
 
-            // INSTANT LOCAL CHECK
             if (localDictionary[word] === 1) {
                 triggerInputAnim('success');
                 setTimeout(() => {
@@ -593,7 +679,8 @@
             const myIndex = playersArr.findIndex(p => p.id === myId);
             
             let nextIndex = (myIndex + 1) % playersArr.length;
-            while(playersArr[nextIndex].lives <= 0 && nextIndex !== myIndex) {
+            while(playersArr[nextIndex].lives <= 0 || playersArr[nextIndex].is_afk) {
+                if (nextIndex === myIndex) break; 
                 nextIndex = (nextIndex + 1) % playersArr.length;
             }
 
@@ -616,12 +703,56 @@
         // ========================
         // HOST TIMERS & LEADERBOARD
         // ========================
+        function skipDeadOrAFKPlayer() {
+            const targetPlayerId = roomData.current_turn;
+            const playersArr = Object.entries(roomData.players).map(([id, p]) => ({id, ...p})).sort((a,b)=>a.order - b.order);
+            
+            const currentIndex = playersArr.findIndex(p => p.id === targetPlayerId);
+            let nextIndex = (currentIndex + 1) % playersArr.length;
+            while(playersArr[nextIndex].lives <= 0 || playersArr[nextIndex].is_afk) {
+                if (nextIndex === currentIndex) break;
+                nextIndex = (nextIndex + 1) % playersArr.length;
+            }
+
+            const updates = {};
+            updates[`rooms/${currentRoomId}/current_turn`] = playersArr[nextIndex].id;
+            updates[`rooms/${currentRoomId}/current_prefix`] = alphabet[Math.floor(Math.random() * alphabet.length)]; 
+            
+            const difficulty = calculateDifficulty();
+            updates[`rooms/${currentRoomId}/bomb_timer`] = difficulty.time; 
+
+            update(ref(db), updates);
+        }
+
         function startHostTimerLoop() {
             if(!isHost) return;
+            
+            clearInterval(localTimerInterval); // Pastikan tidak ada double timer
             
             localTimerInterval = setInterval(() => {
                 if(!roomData || roomData.status !== 'playing') return;
 
+                // 1. CEK KONDISI MENANG GLOBAL (Penting saat ada yang AFK massal)
+                const playersArr = Object.values(roomData.players || {});
+                const alivePlayers = playersArr.filter(p => p.lives > 0 && !p.is_afk);
+
+                if (alivePlayers.length <= 1) {
+                    update(ref(db), {
+                        [`rooms/${currentRoomId}/status`]: 'finished',
+                        [`rooms/${currentRoomId}/winner`]: alivePlayers[0] ? alivePlayers[0].name : 'NOBODY'
+                    });
+                    clearInterval(localTimerInterval);
+                    return; 
+                }
+
+                // 2. CEK PLAYER AKTIF (AFK/MATI DI TENGAH GILIRAN)
+                const activePlayer = roomData.players[roomData.current_turn];
+                if (!activePlayer || activePlayer.is_afk || activePlayer.lives <= 0) {
+                    skipDeadOrAFKPlayer();
+                    return;
+                }
+
+                // 3. KURANGI WAKTU NORMAL
                 if(roomData.bomb_timer > 0) {
                     update(ref(db, `rooms/${currentRoomId}`), { bomb_timer: roomData.bomb_timer - 1 });
                 } else {
@@ -632,7 +763,7 @@
 
         function handleBombExplode() {
             const targetPlayerId = roomData.current_turn;
-            const currentLives = roomData.players[targetPlayerId].lives;
+            const currentLives = roomData.players[targetPlayerId]?.lives || 0;
             const newLives = currentLives - 1;
 
             const updates = {};
@@ -642,7 +773,7 @@
             updates[`rooms/${currentRoomId}/bomb_timer`] = difficulty.time; 
 
             const playersArr = Object.entries(roomData.players).map(([id, p]) => ({id, ...p})).sort((a,b)=>a.order - b.order);
-            const alivePlayers = playersArr.filter(p => p.id === targetPlayerId ? newLives > 0 : p.lives > 0);
+            const alivePlayers = playersArr.filter(p => p.id === targetPlayerId ? newLives > 0 : (p.lives > 0 && !p.is_afk));
             
             if(alivePlayers.length <= 1) {
                 updates[`rooms/${currentRoomId}/status`] = 'finished';
@@ -653,7 +784,7 @@
 
             const currentIndex = playersArr.findIndex(p => p.id === targetPlayerId);
             let nextIndex = (currentIndex + 1) % playersArr.length;
-            while((playersArr[nextIndex].id === targetPlayerId ? newLives <= 0 : playersArr[nextIndex].lives <= 0)) {
+            while((playersArr[nextIndex].id === targetPlayerId ? newLives <= 0 : (playersArr[nextIndex].lives <= 0 || playersArr[nextIndex].is_afk))) {
                 nextIndex = (nextIndex + 1) % playersArr.length;
             }
 
@@ -671,9 +802,10 @@
             list.innerHTML = '';
             
             playersArr.forEach((p, idx) => {
+                if(p.is_afk) return; 
                 const isMe = p.name === myName;
                 list.innerHTML += `<li class="flex justify-between items-center bg-surfaceElevated p-2 rounded border border-surfaceElevated ${p.lives > 0 ? 'text-textMain' : 'text-textMuted opacity-60'} ${isMe ? 'border-primary' : ''}">
-                    <span class="${isMe ? 'text-primary font-bold' : ''}">${idx + 1}. ${isMe ? '👉 ' : ''}${p.name} ${isMe ? '(You)' : ''}</span>
+                    <span class="${isMe ? 'text-primary font-bold' : ''}">${idx + 1}. ${isMe ? '👉 ' : ''}${p.is_host ? '👑' : ''}${p.name} ${isMe ? '(You)' : ''}</span>
                     <span>${p.lives > 0 ? '❤️ '.repeat(p.lives) : '💀 ELIMINATED'}</span>
                 </li>`;
             });
@@ -695,7 +827,11 @@
             updates[`rooms/${currentRoomId}/current_prefix`] = alphabet[Math.floor(Math.random() * alphabet.length)];
             
             for(let pid in roomData.players) {
-                updates[`rooms/${currentRoomId}/players/${pid}/lives`] = 2; 
+                if(roomData.players[pid].is_afk) {
+                    updates[`rooms/${currentRoomId}/players/${pid}`] = null;
+                } else {
+                    updates[`rooms/${currentRoomId}/players/${pid}/lives`] = 2; 
+                }
             }
             update(ref(db), updates);
         });
