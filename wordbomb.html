@@ -25,7 +25,7 @@
                     boxShadow: {
                         'neon-primary': '0 0 15px rgba(255, 77, 0, 0.6)',
                         'neon-success': '0 0 15px rgba(0, 229, 160, 0.6)',
-                        'neon-danger': '0 0 20px rgba(255, 45, 85, 0.8)',
+                        'neon-danger': '0 0 25px rgba(255, 45, 85, 0.8)',
                     }
                 }
             }
@@ -88,13 +88,25 @@
             mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
             -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
         }
+
+        /* Penalty Float Animation (NIGHTMARE) */
+        .penalty-text {
+            position: absolute; top: 0%; left: 50%; transform: translate(-50%, -50%);
+            color: #FF2D55; font-weight: 900; font-size: 2.5rem;
+            text-shadow: 0 0 15px #FF2D55; z-index: 100; pointer-events: none;
+            animation: floatUpFade 0.8s ease-out forwards;
+        }
+        @keyframes floatUpFade {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(1) rotate(-10deg); }
+            100% { opacity: 0; transform: translate(-50%, -50px) scale(1.5) rotate(10deg); }
+        }
     </style>
 </head>
 <body class="text-textMain font-body min-h-screen flex flex-col items-center justify-center p-4 overflow-x-hidden relative">
 
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
-    <div id="screen-lobby" class="w-full max-w-sm bg-surface/90 p-8 rounded-2xl border border-surfaceElevated shadow-2xl backdrop-blur-md">
+    <div id="screen-lobby" class="w-full max-w-sm bg-surface/90 p-8 rounded-2xl border border-surfaceElevated shadow-2xl backdrop-blur-md transition-all">
         <div class="text-center mb-6">
             <h1 class="font-display font-extrabold text-5xl text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">WORDBOMB</h1>
             <p class="font-mono text-secondary text-sm tracking-[0.2em]">CHAIN PROTOCOL</p>
@@ -103,10 +115,10 @@
             <div>
                 <input type="text" id="username-input" autocomplete="off" class="w-full bg-surfaceElevated border border-surfaceElevated focus:border-primary text-textMain px-4 py-3 rounded-lg outline-none font-mono text-center uppercase" placeholder="ENTER NICKNAME">
             </div>
-            <button id="btn-create-room" class="w-full bg-primary hover:bg-[#E64500] text-textMain font-display font-bold text-xl py-3 rounded-lg shadow-neon-primary transition-all active:scale-95">CREATE ROOM</button>
+            <button id="btn-create-room" disabled class="w-full bg-primary hover:bg-[#E64500] text-textMain font-display font-bold text-xl py-3 rounded-lg shadow-neon-primary transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">LOADING DICTIONARY...</button>
             <div class="flex gap-2">
                 <input type="text" id="room-id-input" autocomplete="off" class="w-2/3 bg-bgDark border border-surfaceElevated text-textMain px-4 py-3 rounded-lg outline-none font-mono text-sm text-center uppercase" placeholder="ROOM CODE">
-                <button id="btn-join-room" class="w-1/3 bg-surfaceElevated hover:bg-surface text-textMain font-display font-bold text-lg rounded-lg border border-surfaceElevated hover:border-primary">JOIN</button>
+                <button id="btn-join-room" disabled class="w-1/3 bg-surfaceElevated hover:bg-surface text-textMain font-display font-bold text-lg rounded-lg border border-surfaceElevated hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed">JOIN</button>
             </div>
         </div>
     </div>
@@ -125,14 +137,14 @@
         <p id="host-wait-msg" class="text-xs text-center text-textMuted font-mono animate-pulse">Awaiting Host Authorization...</p>
     </div>
 
-    <div id="screen-game" class="hidden w-full max-w-4xl bg-surface/90 backdrop-blur-md rounded-2xl border border-surfaceElevated shadow-2xl p-6 flex-col gap-6">
+    <div id="screen-game" class="hidden w-full max-w-4xl bg-surface/90 backdrop-blur-md rounded-2xl border-2 border-surfaceElevated shadow-2xl p-6 flex-col gap-6 transition-all duration-500">
         <div class="flex justify-between items-center bg-bgDark/50 p-3 rounded-xl border border-surfaceElevated">
             <div>
                 <span class="block text-[10px] text-textMuted font-bold tracking-widest">TURN</span>
                 <span id="current-player-name" class="font-display text-xl text-primary font-bold">...</span>
             </div>
-            <div class="text-center hidden md:block">
-                <span class="block text-[10px] text-textMuted font-bold tracking-widest">DIFFICULTY LEVEL</span>
+            <div class="text-center">
+                <span class="block text-[10px] text-textMuted font-bold tracking-widest">DIFFICULTY</span>
                 <span id="difficulty-level" class="font-mono text-sm text-success font-bold">1 (NORMAL)</span>
             </div>
             <div class="text-right">
@@ -157,7 +169,7 @@
 
         <div class="text-center">
             <p class="text-xs text-textMuted uppercase tracking-[0.2em] mb-1">Must Start With</p>
-            <div class="inline-block bg-bgDark border-2 border-secondary px-6 py-2 rounded-lg shadow-[0_0_10px_rgba(255,184,0,0.3)]">
+            <div id="target-badge" class="inline-block bg-bgDark border-2 border-secondary px-6 py-2 rounded-lg shadow-[0_0_10px_rgba(255,184,0,0.3)] transition-colors">
                 <span id="target-prefix" class="font-display font-bold text-4xl text-secondary">?</span>
             </div>
         </div>
@@ -166,7 +178,7 @@
             <input type="text" id="game-input" disabled class="w-full bg-bgDark border-2 border-surfaceElevated focus:border-primary text-center text-textMain text-2xl md:text-3xl font-display font-bold px-4 md:px-6 py-3 md:py-4 rounded-xl outline-none uppercase transition-colors shadow-inner disabled:opacity-50" placeholder="WAITING..." autocomplete="off">
         </form>
 
-        <div class="w-full max-w-lg mx-auto mt-1 overflow-hidden history-mask">
+        <div class="w-full max-w-xs md:max-w-md mx-auto mt-1 overflow-hidden history-mask">
             <div id="word-history-container" class="flex gap-2 justify-center items-center overflow-hidden whitespace-nowrap h-10 px-8">
                 <span class="text-textMuted text-xs italic font-mono">Mission Log: Awaiting first word...</span>
             </div>
@@ -216,6 +228,7 @@
         // ========================
         // GLOBAL STATE & VARIABLES
         // ========================
+        let localDictionary = null; 
         let myId = 'p_' + Math.random().toString(36).substring(2, 9);
         let myName = '';
         let currentRoomId = '';
@@ -223,7 +236,7 @@
         let roomData = null;
         let localTimerInterval = null;
         let currentBaseTime = 20; 
-        let lastRenderedChain = ''; // Variabel ini sekarang berada di scope global
+        let lastRenderedChain = ''; 
         const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         const screens = {
@@ -233,6 +246,9 @@
             leaderboard: document.getElementById('screen-leaderboard')
         };
 
+        // ========================
+        // UTILITY FUNCTIONS
+        // ========================
         function switchScreen(screenKey) {
             Object.values(screens).forEach(s => {
                 s.classList.add('hidden'); s.classList.remove('flex');
@@ -273,6 +289,35 @@
             }
         }
 
+        function showTimePenaltyAnim() {
+            const container = document.getElementById('bomb-graphic'); 
+            const penalty = document.createElement('div');
+            penalty.className = 'penalty-text font-display';
+            penalty.innerText = '-2s';
+            container.appendChild(penalty);
+            setTimeout(() => penalty.remove(), 800);
+        }
+
+        // ========================
+        // LOAD DICTIONARY
+        // ========================
+        async function loadLocalDictionary() {
+            const btnCreate = document.getElementById('btn-create-room');
+            const btnJoin = document.getElementById('btn-join-room');
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words_dictionary.json');
+                localDictionary = await response.json(); 
+                btnCreate.disabled = false;
+                btnJoin.disabled = false;
+                btnCreate.innerText = "CREATE ROOM";
+                showCustomToast("Dictionary Loaded!", "success");
+            } catch (err) {
+                showCustomToast("Failed to load dictionary. Check connection.", "error");
+                btnCreate.innerText = "ERROR LOADING";
+            }
+        }
+        loadLocalDictionary();
+
         // ========================
         // ROOM & LOBBY LOGIC
         // ========================
@@ -288,13 +333,11 @@
             isHost = true;
             currentRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
             
-            const roomRef = ref(db, `rooms/${currentRoomId}`);
-            set(roomRef, {
+            set(ref(db, `rooms/${currentRoomId}`), {
                 status: 'waiting_players',
                 current_turn: myId,
                 current_prefix: alphabet[Math.floor(Math.random() * alphabet.length)],
-                bomb_timer: 20, turn_count: 0, winner: '',
-                is_validating: false, word_chain: '', 
+                bomb_timer: 20, turn_count: 0, winner: '', word_chain: '', 
                 players: { [myId]: { name: myName, lives: 2, is_host: true, order: 0 } }
             }).then(() => {
                 listenToRoom(); switchScreen('waiting');
@@ -371,7 +414,7 @@
         document.getElementById('btn-start-game').addEventListener('click', () => {
             if(!isHost) return;
             update(ref(db, `rooms/${currentRoomId}`), { 
-                status: 'playing', turn_count: 0, bomb_timer: 20, is_validating: false, word_chain: ''
+                status: 'playing', turn_count: 0, bomb_timer: 20, word_chain: ''
             });
             startHostTimerLoop();
         });
@@ -381,6 +424,7 @@
         // ========================
         function calculateDifficulty() {
             const turns = roomData.turn_count || 0;
+            if (turns > 100) return { level: 4, time: 7, syllables: true, desc: "4 (NIGHTMARE)" };
             if (turns > 30) return { level: 3, time: 10, syllables: true, desc: "3 (INSANE)" };
             if (turns > 15) return { level: 2, time: 15, syllables: false, desc: "2 (HARD)" };
             return { level: 1, time: 20, syllables: false, desc: "1 (NORMAL)" };
@@ -389,13 +433,26 @@
         function renderGameplay() {
             const difficulty = calculateDifficulty();
             currentBaseTime = difficulty.time;
+            const gameScreen = document.getElementById('screen-game');
+            const targetBadge = document.getElementById('target-badge');
+
+            // NIGHTMARE MODE UI LOGIC
+            if(difficulty.level === 4) {
+                gameScreen.classList.replace('border-surfaceElevated', 'border-danger');
+                gameScreen.classList.add('shadow-neon-danger');
+                targetBadge.classList.replace('border-secondary', 'border-danger');
+            } else {
+                gameScreen.classList.replace('border-danger', 'border-surfaceElevated');
+                gameScreen.classList.remove('shadow-neon-danger');
+                targetBadge.classList.replace('border-danger', 'border-secondary');
+            }
 
             document.getElementById('target-prefix').innerText = roomData.current_prefix;
             document.getElementById('turn-count-display').innerText = roomData.turn_count || 0;
             
             const diffEl = document.getElementById('difficulty-level');
             diffEl.innerText = difficulty.desc;
-            diffEl.className = `font-mono text-sm font-bold ${difficulty.level === 3 ? 'text-danger animate-pulse' : (difficulty.level === 2 ? 'text-secondary' : 'text-success')}`;
+            diffEl.className = `font-mono text-sm font-bold ${difficulty.level === 4 ? 'text-danger animate-pulse shadow-neon-danger' : (difficulty.level === 3 ? 'text-primary animate-pulse' : (difficulty.level === 2 ? 'text-secondary' : 'text-success'))}`;
 
             // Timer UI
             const timerCircle = document.getElementById('timer-circle');
@@ -440,23 +497,21 @@
             // Input UI
             const wordInput = document.getElementById('game-input');
             if(roomData.current_turn === myId && roomData.players[myId].lives > 0) {
-                if(!roomData.is_validating) {
-                    wordInput.removeAttribute('disabled');
-                    wordInput.placeholder = "YOUR TURN!";
-                    if(document.activeElement !== wordInput) wordInput.focus();
-                }
+                wordInput.removeAttribute('disabled');
+                wordInput.placeholder = "YOUR TURN!";
+                if(document.activeElement !== wordInput) wordInput.focus();
             } else {
                 wordInput.setAttribute('disabled', 'true');
                 wordInput.placeholder = roomData.players[myId]?.lives <= 0 ? "ELIMINATED" : "WAIT...";
                 wordInput.value = '';
             }
 
-            // History Tape Render
+            // History Tape Render (MAX 3 WORDS FOR MOBILE)
             const historyContainer = document.getElementById('word-history-container');
             if (roomData.word_chain && roomData.word_chain !== lastRenderedChain) {
                 lastRenderedChain = roomData.word_chain;
                 const words = roomData.word_chain.split(',');
-                const displayWords = words.slice(-5);
+                const displayWords = words.slice(-3); // Diubah dari -5 menjadi -3
                 
                 historyContainer.innerHTML = displayWords.map((w, index) => {
                     const isLatest = index === displayWords.length - 1;
@@ -469,44 +524,49 @@
         }
 
         // ========================
-        // CORE MECHANICS
+        // CORE MECHANICS (LOCAL)
         // ========================
-        document.getElementById('word-form').addEventListener('submit', async (e) => {
+        function handleWrongAnswer(msg) {
+            triggerInputAnim('error'); 
+            showCustomToast(msg, 'warning');
+            
+            const diff = calculateDifficulty();
+            // JIKA NIGHTMARE MODE: Berikan Hukuman Waktu -2s!
+            if (diff.level === 4) {
+                const newTime = Math.max(0, roomData.bomb_timer - 2);
+                update(ref(db, `rooms/${currentRoomId}`), { bomb_timer: newTime });
+                showTimePenaltyAnim();
+            }
+        }
+
+        document.getElementById('word-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const inputField = document.getElementById('game-input');
             const word = inputField.value.toLowerCase().trim();
             const prefix = roomData.current_prefix.toLowerCase();
 
             if(!word) return;
-            if(word.length < 3) { triggerInputAnim('error'); showCustomToast("Too short! Min 3 letters.", 'warning'); return; }
-            if(!word.startsWith(prefix)) { triggerInputAnim('error'); showCustomToast(`Start with "${prefix.toUpperCase()}"!`, 'warning'); return; }
-            if(roomData.used_words && roomData.used_words[word]) { triggerInputAnim('error'); showCustomToast("Word already used!", 'error'); return; }
+            if(!localDictionary) { showCustomToast("Dictionary loading...", 'warning'); return; }
+
+            // Pengecekan dengan sistem penalty Nightmare
+            if(word.length < 3) { handleWrongAnswer("Too short! Min 3 letters."); return; }
+            if(!word.startsWith(prefix)) { handleWrongAnswer(`Start with "${prefix.toUpperCase()}"!`); return; }
+            if(roomData.used_words && roomData.used_words[word]) { handleWrongAnswer("Word already used!"); return; }
 
             inputField.setAttribute('disabled', 'true');
-            update(ref(db, `rooms/${currentRoomId}`), { is_validating: true });
-            showCustomToast("Checking...", 'info');
 
-            try {
-                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-                if(res.status === 404) {
-                    update(ref(db, `rooms/${currentRoomId}`), { is_validating: false });
-                    inputField.removeAttribute('disabled'); 
-                    triggerInputAnim('error');
-                    showCustomToast("Invalid English word!", 'error');
-                    inputField.focus();
-                } else if(res.ok) {
-                    triggerInputAnim('success');
-                    showCustomToast("Valid!", 'success');
-                    setTimeout(() => {
-                        inputField.value = '';
-                        passTurn(word);
-                    }, 300);
-                }
-            } catch(err) {
-                update(ref(db, `rooms/${currentRoomId}`), { is_validating: false });
+            // INSTANT LOCAL CHECK
+            if (localDictionary[word] === 1) {
+                triggerInputAnim('success');
+                setTimeout(() => {
+                    inputField.value = '';
+                    inputField.removeAttribute('disabled');
+                    passTurn(word);
+                }, 200);
+            } else {
                 inputField.removeAttribute('disabled');
-                triggerInputAnim('error');
-                showCustomToast("API Network Error.", 'error'); 
+                inputField.focus();
+                handleWrongAnswer("Invalid English word!");
             }
         });
 
@@ -540,18 +600,14 @@
             const currentTurnCount = (roomData.turn_count || 0) + 1;
             const difficulty = calculateDifficulty(); 
             const nextPrefix = getNextPrefix(validWord, difficulty);
-            
-            // Perbaikan Scope: Definisikan string currentChain terlebih dahulu
             const currentChain = roomData.word_chain ? roomData.word_chain + ',' + validWord : validWord;
 
-            // Perbaikan Scope: Inisialisasi const updates terlebih dahulu
             const updates = {};
             updates[`rooms/${currentRoomId}/current_turn`] = playersArr[nextIndex].id;
             updates[`rooms/${currentRoomId}/current_prefix`] = nextPrefix;
             updates[`rooms/${currentRoomId}/bomb_timer`] = difficulty.time; 
             updates[`rooms/${currentRoomId}/turn_count`] = currentTurnCount;
             updates[`rooms/${currentRoomId}/used_words/${validWord}`] = true;
-            updates[`rooms/${currentRoomId}/is_validating`] = false;
             updates[`rooms/${currentRoomId}/word_chain`] = currentChain;
 
             update(ref(db), updates);
@@ -565,7 +621,6 @@
             
             localTimerInterval = setInterval(() => {
                 if(!roomData || roomData.status !== 'playing') return;
-                if(roomData.is_validating === true) return; 
 
                 if(roomData.bomb_timer > 0) {
                     update(ref(db, `rooms/${currentRoomId}`), { bomb_timer: roomData.bomb_timer - 1 });
@@ -636,8 +691,7 @@
             updates[`rooms/${currentRoomId}/used_words`] = null; 
             updates[`rooms/${currentRoomId}/turn_count`] = 0;
             updates[`rooms/${currentRoomId}/bomb_timer`] = 20;
-            updates[`rooms/${currentRoomId}/is_validating`] = false; 
-            updates[`rooms/${currentRoomId}/word_chain`] = ''; // Kosongkan riwayat
+            updates[`rooms/${currentRoomId}/word_chain`] = ''; 
             updates[`rooms/${currentRoomId}/current_prefix`] = alphabet[Math.floor(Math.random() * alphabet.length)];
             
             for(let pid in roomData.players) {
