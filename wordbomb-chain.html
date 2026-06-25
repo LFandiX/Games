@@ -55,18 +55,18 @@ input{color-scheme:dark}
 .divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:var(--b1)}
 
 /* ── LOBBY & WAITING ──────────────────────────────────── */
-#screen-lobby{align-items:center;justify-content:center;min-height:100dvh;padding:24px 16px;position:relative;overflow:hidden}
+#screen-lobby{align-items:center;justify-content:flex-start;height:100dvh;padding:24px 16px;position:relative;overflow-y:auto}
 #lobby-bg .fb{position:absolute;pointer-events:none;opacity:.04;animation:floatUp linear infinite}
 @keyframes floatUp{from{transform:translateY(110vh) rotate(0deg)}to{transform:translateY(-10vh) rotate(360deg)}}
-.lobby-card{padding:40px 36px;width:100%;max-width:440px;position:relative;z-index:1}
+.lobby-card{margin:auto 0;flex-shrink:0;padding:40px 36px;width:100%;max-width:440px;position:relative;z-index:1}
 .lobby-card .logo{font-size:34px;margin-bottom:6px}
 .tagline{text-align:center;color:var(--t3);font-size:13px;margin-bottom:30px}
 .join-row{display:flex;gap:8px}
 .join-row .fi{flex:1;letter-spacing:3px;font-family:var(--fm)}
 .join-row .btn{width:auto;padding:12px 18px}
 
-#screen-waiting{align-items:center;justify-content:center;min-height:100dvh;padding:24px 16px}
-.wait-card{padding:36px;width:100%;max-width:480px}
+#screen-waiting{align-items:center;justify-content:flex-start;height:100dvh;padding:24px 16px;overflow-y:auto}
+.wait-card{margin:auto 0;flex-shrink:0;padding:36px;width:100%;max-width:480px}
 .wait-card .logo{font-size:26px;margin-bottom:20px}
 .rc-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);text-align:center;margin-bottom:8px}
 .rc-code{font-family:var(--fm);font-size:40px;font-weight:700;letter-spacing:10px;color:var(--amber);text-align:center;text-shadow:0 0 30px rgba(245,158,11,.45);cursor:pointer;transition:opacity .2s}
@@ -168,8 +168,8 @@ input{color-scheme:dark}
 @keyframes cfFall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(105vh) rotate(720deg)}}
 
 /* ── GAME OVER ────────────────────────────────────────── */
-#screen-gameover{align-items:center;justify-content:center;min-height:100dvh;padding:24px 16px;overflow-y:auto}
-.go-card{padding:40px 36px;width:100%;max-width:500px;text-align:center;position:relative;z-index:1}
+#screen-gameover{align-items:center;justify-content:flex-start;height:100dvh;padding:24px 16px;overflow-y:auto}
+.go-card{margin:auto 0;flex-shrink:0;padding:40px 36px;width:100%;max-width:500px;text-align:center;position:relative;z-index:1}
 .go-title{font-family:var(--fd);font-size:52px;color:var(--red);text-shadow:0 0 34px rgba(239,68,68,.4);margin-bottom:6px}
 .go-crown{font-size:52px;margin-bottom:4px}
 .go-wlbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin:10px 0 4px}
@@ -196,8 +196,8 @@ input{color-scheme:dark}
   .bomb-em{font-size:32px}.bomb-t{font-size:12px}
   .players-grid{grid-template-columns:1fr 1fr;}
   .go-stats{grid-template-columns:1fr 1fr}
-  .go-card{padding:28px 20px}
-  .lobby-card,.wait-card{padding:28px 20px}
+  .go-card{padding:28px 20px;margin:auto 0;}
+  .lobby-card,.wait-card{padding:28px 20px;margin:auto 0;}
   .logo{font-size:28px}
   .target-val {font-size: 28px;}
 }
@@ -215,11 +215,11 @@ input{color-scheme:dark}
       <label class="fl">Your Nickname</label>
       <input id="inp-name" class="fi" type="text" placeholder="Enter your name…" maxlength="16" autocomplete="off">
     </div>
-    <button class="btn btn-amber" id="btn-create" style="margin-bottom:8px">💥 Create New Room</button>
+    <button class="btn btn-amber" id="btn-create" disabled>LOADING DICTIONARY...</button>
     <div class="divider-or">OR JOIN A ROOM</div>
     <div class="join-row">
       <input id="inp-code" class="fi" type="text" placeholder="CODE" maxlength="5" autocomplete="off" style="text-transform:uppercase">
-      <button class="btn btn-ghost" id="btn-join">Join →</button>
+      <button class="btn btn-ghost" id="btn-join" disabled>Join →</button>
     </div>
   </div>
 </div>
@@ -289,7 +289,6 @@ input{color-scheme:dark}
         </div>
     </div>
 
-    <!-- Original Chain Tape Restored -->
     <div class="chain-sec">
         <div class="chain-lbl">📜 Word Chain</div>
         <div class="chain-words" id="chain-words">
@@ -357,7 +356,7 @@ const HARD_CHARS  = new Set(['X','Q','Z','V','Y']);
 const AV_COLORS   = ['#EF4444','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#84CC16','#A78BFA'];
 const MEDALS      = ['🥇','🥈','🥉'];
 const MAX_PLAYERS = 10;
-const LIVES       = 3;
+const LIVES       = 2;
 const CIRC        = 452.39;
 
 let localDictionary = null;
@@ -483,6 +482,10 @@ fetch('https://cdn.jsdelivr.net/gh/dwyl/english-words@master/words_dictionary.js
     .then(res => res.json())
     .then(data => { 
         localDictionary = data; 
+        const btnCreate = document.getElementById('btn-create');
+        const btnJoin = document.getElementById('btn-join');
+        btnCreate.disabled = false; btnJoin.disabled = false;
+        btnCreate.innerText = "💥 Create New Room"; btnJoin.innerText = "Join →";
         toast("Local Dictionary Loaded! (Ultra Fast Mode)", "#10B981", "#fff");
     })
     .catch(err => { console.warn("Local Dict failed, will fallback to API", err); });
@@ -515,8 +518,7 @@ document.getElementById('btn-create').addEventListener('click',async()=>{
     players:{[myId]:{name:myName,lives:LIVES,is_host:true,order:0,score:0,avatar:myAv,is_afk:false}}
   });
   
-  const myPlayerRef = ref(db, `rooms/${roomId}/players/${myId}`);
-  onDisconnect(myPlayerRef).update({ is_afk: true, lives: 0, is_host: false });
+  onDisconnect(roomRef).remove(); 
   listenRoom(); showScreen('screen-waiting');
 });
 
@@ -605,8 +607,6 @@ function listenRoom(){
         }
     } else if (activeHost.id !== myId) {
         isHost = false; clearTimeout(timerRef); hostRun = false;
-    } else {
-        isHost = true; 
     }
 
     // Nightmare Mode Check
@@ -634,7 +634,7 @@ function listenRoom(){
       }
       if (requiresCleanup) { update(ref(db), cleanupUpdates); return; }
       renderWaiting(); 
-      showScreen('screen-waiting'); // BUG FIXED: Properly transition to Waiting Screen
+      showScreen('screen-waiting'); 
     } else if(roomData.status==='playing'){
       if(!document.getElementById('screen-game').classList.contains('active')) showScreen('screen-game');
       if(isHost && !hostRun){ hostRun=true; scheduleTick(); }
@@ -678,7 +678,7 @@ function renderWaiting() {
 document.getElementById('btn-start').addEventListener('click',()=>{
   if(!isHost) return;
   update(ref(db,`rooms/${roomId}`),{ 
-      status:'playing', chain_count:0, bomb_timer:20, bomb_count:0, is_validating: false, chain: null 
+      status:'playing', chain_count:0, turn_count:0, bomb_timer:20, bomb_count:0, is_validating: false, chain: null 
   });
 });
 
@@ -864,6 +864,7 @@ function passTurn(word){
   while((ps[ni].lives<=0 || ps[ni].is_afk) && g<ps.length){ni=(ni+1)%ps.length;g++;}
 
   const cc=(roomData.chain_count||0)+1;
+  const tc=(roomData.turn_count||0)+1;
   const diff=calculateDifficulty(); 
   
   let pfx;
@@ -883,6 +884,7 @@ function passTurn(word){
   u[`rooms/${roomId}/current_prefix`]=pfx;
   u[`rooms/${roomId}/bomb_timer`]=diff.time;
   u[`rooms/${roomId}/chain_count`]=cc;
+  u[`rooms/${roomId}/turn_count`]=tc;
   u[`rooms/${roomId}/used_words/${word}`]=true;
   u[`rooms/${roomId}/chain/${cc-1}`]={word:word, player:myName, av:myAv};
   
@@ -921,7 +923,6 @@ async function hostTick(){
   const ps = Object.entries(fresh.players || {}).map(([id, p]) => ({ id, ...p }));
   const alive = ps.filter(p => p.lives > 0 && !p.is_afk);
   
-  // BUG FIXED: Memastikan 'alive[0]' benar-benar punya ID sebelum dikirim ke Firebase
   if (alive.length <= 1) {
       update(ref(db), {
           [`rooms/${roomId}/status`]: 'finished',
@@ -972,7 +973,6 @@ async function handleBoom(fresh){
   const diff = calculateDifficulty();
   u[`rooms/${roomId}/bomb_timer`]=diff.time;
 
-  // BUG FIXED: Winner ID Safe Check
   if(alive.length<=1){
     const w=alive[0]??ps[0];
     u[`rooms/${roomId}/status`]='finished';
@@ -1022,13 +1022,13 @@ function showGameOver(){
   }
 }
 
-// BUG FIXED: Update Reset Data & Layar
 document.getElementById('btn-again').addEventListener('click',()=>{
   if(!isHost) return;
   const updates = {};
   updates[`rooms/${roomId}/status`] = 'waiting_players';
   updates[`rooms/${roomId}/used_words`] = null; 
   updates[`rooms/${roomId}/chain_count`] = 0;
+  updates[`rooms/${roomId}/turn_count`] = 0;
   updates[`rooms/${roomId}/bomb_timer`] = 20;
   updates[`rooms/${roomId}/chain`] = null; 
   updates[`rooms/${roomId}/winner`] = null; 
@@ -1040,7 +1040,6 @@ document.getElementById('btn-again').addEventListener('click',()=>{
           updates[`rooms/${roomId}/players/${pid}`] = null;
       } else {
           updates[`rooms/${roomId}/players/${pid}/lives`] = LIVES; 
-          updates[`rooms/${roomId}/players/${pid}/score`] = 0; 
       }
   }
   
