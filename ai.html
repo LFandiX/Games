@@ -21,6 +21,7 @@
   button:hover{border-color:var(--accent2)}
   button.primary{background:var(--accent);border-color:var(--accent)}
   button:disabled{opacity:.5;cursor:not-allowed}
+  select#modelSel{font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;max-width:46vw}
   #chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
   .msg{max-width:85%;padding:10px 14px;border-radius:14px;word-wrap:break-word;overflow-wrap:anywhere}
   .msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:4px;white-space:pre-wrap}
@@ -55,6 +56,7 @@
 <header>
   <span class="dot" id="dot"></span>
   <h1>Peacephile AI Chatbot</h1>
+  <select id="modelSel" title="Pilih model" style="display:none"></select>
   <button id="btnClear" title="Hapus percakapan">Bersihkan</button>
   <button id="btnSettings" class="primary">⚙ Pengaturan</button>
 </header>
@@ -62,7 +64,7 @@
 <main id="chat">
   <div class="empty" id="empty">
     <h2>Halo 👋</h2>
-    <p>Isi dulu pengaturan koneksi SAP AI Core, lalu mulai mengobrol.</p>
+    <p>Selamat datang di Chatbot Peacephile</p>
   </div>
 </main>
 
@@ -174,7 +176,7 @@
       const res = await fetch(trimSlash(cfg.proxyUrl) + '/chat', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ messages, max_completion_tokens: cfg.maxTokens })
+        body: JSON.stringify({ messages, max_completion_tokens: cfg.maxTokens, model: cfg.model || undefined })
       });
       if(!res.ok) throw new Error('Proxy error (' + res.status + '): ' + (await res.text()).slice(0,500));
       const data = await res.json();
@@ -283,8 +285,25 @@
   };
   $('btnClear').onclick = () => { if(!history.length || confirm('Hapus seluruh percakapan?')){ history=[]; saveHist(); renderAll(); } };
 
+  /* ---------- model selector ---------- */
+  async function loadModels(){
+    if(!cfg.proxyUrl) return;
+    try{
+      const res = await fetch(trimSlash(cfg.proxyUrl) + '/models');
+      if(!res.ok) return;
+      const list = (await res.json()).models || [];
+      if(list.length < 1) return;
+      const sel = $('modelSel');
+      sel.innerHTML = list.map(m => '<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>').join('');
+      if(!list.some(m => m.id === cfg.model)) cfg.model = list[0].id;
+      sel.value = cfg.model;
+      sel.style.display = list.length > 1 ? '' : 'none';
+      sel.onchange = () => { cfg.model = sel.value; saveCfg(); addMsg('error', 'Model diganti ke: ' + sel.options[sel.selectedIndex].text); };
+    }catch(e){}
+  }
+
   /* ---------- init ---------- */
-  load(); renderAll();
+  load(); renderAll(); loadModels();
   if(!configured()) setTimeout(()=>$('dlg').showModal(), 300);
 })();
 </script>
