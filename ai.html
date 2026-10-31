@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SAP AI Chatbot</title>
+<title>Peacephile AI Chatbot</title>
 <style>
   :root{
     --bg:#0d1117; --panel:#151b23; --panel2:#1c2430; --border:#2a3441;
@@ -54,7 +54,7 @@
 
 <header>
   <span class="dot" id="dot"></span>
-  <h1>SAP AI Chatbot</h1>
+  <h1>Peacephile AI Chatbot</h1>
   <button id="btnClear" title="Hapus percakapan">Bersihkan</button>
   <button id="btnSettings" class="primary">⚙ Pengaturan</button>
 </header>
@@ -74,6 +74,10 @@
 <dialog id="dlg">
   <div class="dlg">
     <h2>Pengaturan SAP AI Core</h2>
+    <label>Proxy URL (disarankan — jika diisi, kolom koneksi langsung di bawah diabaikan)
+      <input type="text" id="proxyUrl" placeholder="https://sap-ai-proxy.namaanda.workers.dev">
+    </label>
+    <div class="hint">Mode langsung (tanpa proxy) hanya jalan jika server mengizinkan CORS. Kosongkan Proxy URL untuk mode langsung.</div>
     <label>Auth URL (token endpoint, dari service key)
       <input type="text" id="authUrl" placeholder="https://xxx.authentication.eu10.hana.ondemand.com">
     </label>
@@ -113,7 +117,9 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const FIELDS = ['authUrl','clientId','clientSecret','apiUrl','deploymentId','resourceGroup','chatPath','maxTokens','historyLen','systemPrompt'];
+  // >>> Isi dengan alamat worker Cloudflare Anda, contoh: 'https://curly-resonance-1cae.NAMA.workers.dev'
+  const DEFAULT_PROXY = 'https://curly-resonance-1cae.alfandiwijaya8.workers.dev';
+  const FIELDS = ['proxyUrl','authUrl','clientId','clientSecret','apiUrl','deploymentId','resourceGroup','chatPath','maxTokens','historyLen','systemPrompt'];
   const DEFAULTS = {resourceGroup:'default',chatPath:'/v2/inference/deployments/{deploymentId}/chat/completions',maxTokens:1024,historyLen:20};
   let cfg = {...DEFAULTS};
   let history = [];
@@ -122,6 +128,7 @@
   /* ---------- storage ---------- */
   function load(){
     try{ cfg = {...DEFAULTS, ...JSON.parse(localStorage.getItem('sap_ai_cfg')||'{}')}; }catch(e){}
+    if(DEFAULT_PROXY && !cfg.proxyUrl) cfg.proxyUrl = DEFAULT_PROXY;
     try{ history = JSON.parse(localStorage.getItem('sap_ai_hist')||'[]'); }catch(e){ history = []; }
   }
   function saveCfg(){ try{ localStorage.setItem('sap_ai_cfg', JSON.stringify(cfg)); }catch(e){} }
@@ -137,7 +144,7 @@
   function setStatus(msg, ok){
     const s = $('status'); s.textContent = msg; s.style.color = ok===true?'var(--ok)':ok===false?'var(--danger)':'var(--muted)';
   }
-  function configured(){ return cfg.authUrl && cfg.clientId && cfg.clientSecret && cfg.apiUrl && cfg.deploymentId; }
+  function configured(){ return cfg.proxyUrl || cfg.authUrl && cfg.clientId && cfg.clientSecret && cfg.apiUrl && cfg.deploymentId; }
   function updateDot(state){ $('dot').className = 'dot ' + (state||''); }
 
   /* ---------- SAP AI Core API ---------- */
@@ -163,6 +170,18 @@
   }
 
   async function callChat(messages, retry=true){
+    if(cfg.proxyUrl){
+      const res = await fetch(trimSlash(cfg.proxyUrl) + '/chat', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ messages, max_completion_tokens: cfg.maxTokens })
+      });
+      if(!res.ok) throw new Error('Proxy error (' + res.status + '): ' + (await res.text()).slice(0,500));
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if(content == null) throw new Error('Respons tidak valid:\n' + JSON.stringify(data).slice(0,400));
+      return content;
+    }
     const t = await getToken();
     const path = cfg.chatPath.replace('{deploymentId}', encodeURIComponent(cfg.deploymentId));
     const res = await fetch(trimSlash(cfg.apiUrl) + path, {
@@ -257,7 +276,7 @@
   $('btnTest').onclick = async () => {
     readForm(); token=null; setStatus('Mengetes…');
     try{
-      await getToken(true); setStatus('Token OK. Mengetes chat…');
+      if(!cfg.proxyUrl){ await getToken(true); setStatus('Token OK. Mengetes chat…'); }
       const r = await callChat([{role:'user', content:'Balas dengan satu kata: OK'}]);
       setStatus('Berhasil ✔ Balasan: ' + r.slice(0,80), true); updateDot('ok');
     }catch(e){ setStatus(e.message + (/Failed to fetch/i.test(e.message)?' (kemungkinan CORS)':''), false); updateDot('err'); }
