@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SAP AI Chatbot</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#151b23; --panel2:#1c2430; --border:#2a3441;
+    --text:#e6edf3; --muted:#8b98a8; --accent:#0a6ed1; --accent2:#3b9bff;
+    --user:#0a6ed1; --bot:#1c2430; --danger:#f85149; --ok:#3fb950;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;height:100dvh}
+  header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--border)}
+  header h1{font-size:16px;margin:0;flex:1}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
+  button{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:8px;padding:7px 12px}
+  button:hover{border-color:var(--accent2)}
+  button.primary{background:var(--accent);border-color:var(--accent)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+  .msg{max-width:85%;padding:10px 14px;border-radius:14px;word-wrap:break-word;overflow-wrap:anywhere}
+  .msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:4px;white-space:pre-wrap}
+  .msg.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--border);border-bottom-left-radius:4px}
+  .msg.error{align-self:center;background:#3a1618;border:1px solid var(--danger);color:#ffb4ae;font-size:13px;white-space:pre-wrap}
+  .msg pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;margin:8px 0;font-size:13px}
+  .msg code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+  .msg :not(pre)>code{background:#0d1117;padding:1px 5px;border-radius:4px}
+  .empty{margin:auto;text-align:center;color:var(--muted);max-width:320px}
+  .empty h2{color:var(--text);margin-bottom:4px}
+  .typing span{display:inline-block;width:7px;height:7px;margin:0 2px;background:var(--muted);border-radius:50%;animation:b 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+  @keyframes b{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+  form#composer{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--border)}
+  textarea#input{flex:1;resize:none;max-height:140px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font:inherit;outline:none}
+  textarea#input:focus{border-color:var(--accent2)}
+  /* settings */
+  dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:14px;width:min(520px,94vw);padding:0;max-height:92dvh}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .dlg{padding:18px;display:flex;flex-direction:column;gap:10px}
+  .dlg h2{margin:0 0 4px;font-size:17px}
+  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+  input[type=text],input[type=password],input[type=number],textarea.sys{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:inherit;width:100%}
+  .row{display:flex;gap:8px}.row>*{flex:1}
+  .hint{font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+  #status{font-size:12px;min-height:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="dot" id="dot"></span>
+  <h1>SAP AI Chatbot</h1>
+  <button id="btnClear" title="Hapus percakapan">Bersihkan</button>
+  <button id="btnSettings" class="primary">⚙ Pengaturan</button>
+</header>
+
+<main id="chat">
+  <div class="empty" id="empty">
+    <h2>Halo 👋</h2>
+    <p>Isi dulu pengaturan koneksi SAP AI Core, lalu mulai mengobrol.</p>
+  </div>
+</main>
+
+<form id="composer">
+  <textarea id="input" rows="1" placeholder="Ketik pesan…" enterkeyhint="send"></textarea>
+  <button class="primary" id="btnSend" type="submit">Kirim</button>
+</form>
+
+<dialog id="dlg">
+  <div class="dlg">
+    <h2>Pengaturan SAP AI Core</h2>
+    <label>Auth URL (token endpoint, dari service key)
+      <input type="text" id="authUrl" placeholder="https://xxx.authentication.eu10.hana.ondemand.com">
+    </label>
+    <div class="row">
+      <label>Client ID <input type="text" id="clientId" autocomplete="off"></label>
+      <label>Client Secret <input type="password" id="clientSecret" autocomplete="off"></label>
+    </div>
+    <label>AI_API_URL (serviceurls.AI_API_URL)
+      <input type="text" id="apiUrl" placeholder="https://api.ai.prod.eu-central-1.aws.ml.hana.ondemand.com">
+    </label>
+    <div class="row">
+      <label>Deployment ID <input type="text" id="deploymentId" placeholder="d123abc456"></label>
+      <label>Resource Group <input type="text" id="resourceGroup" value="default"></label>
+    </div>
+    <label>Path endpoint chat (<code>{deploymentId}</code> diganti otomatis)
+      <input type="text" id="chatPath" value="/v2/inference/deployments/{deploymentId}/chat/completions">
+    </label>
+    <div class="row">
+      <label>max_completion_tokens <input type="number" id="maxTokens" value="1024" min="1"></label>
+      <label>Riwayat dikirim (pesan) <input type="number" id="historyLen" value="20" min="1"></label>
+    </div>
+    <label>System prompt (opsional)
+      <textarea class="sys" id="systemPrompt" rows="2" placeholder="Kamu adalah asisten yang membantu…"></textarea>
+    </label>
+    <div class="hint">
+      ⚠️ Kredensial disimpan di browser (localStorage) perangkat ini saja. SAP AI Core umumnya <b>tidak mengizinkan CORS</b> dari browser — jika muncul "Failed to fetch", jalankan lewat proxy backend dan isi Auth URL / AI_API_URL dengan alamat proxy kamu. Untuk produksi, simpan client secret di server, bukan di sini.
+    </div>
+    <div id="status"></div>
+    <div class="actions">
+      <button id="btnTest" type="button">Tes Koneksi</button>
+      <button id="btnClose" type="button">Batal</button>
+      <button id="btnSave" type="button" class="primary">Simpan</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const FIELDS = ['authUrl','clientId','clientSecret','apiUrl','deploymentId','resourceGroup','chatPath','maxTokens','historyLen','systemPrompt'];
+  const DEFAULTS = {resourceGroup:'default',chatPath:'/v2/inference/deployments/{deploymentId}/chat/completions',maxTokens:1024,historyLen:20};
+  let cfg = {...DEFAULTS};
+  let history = [];
+  let token = null, tokenExp = 0, busy = false;
+
+  /* ---------- storage ---------- */
+  function load(){
+    try{ cfg = {...DEFAULTS, ...JSON.parse(localStorage.getItem('sap_ai_cfg')||'{}')}; }catch(e){}
+    try{ history = JSON.parse(localStorage.getItem('sap_ai_hist')||'[]'); }catch(e){ history = []; }
+  }
+  function saveCfg(){ try{ localStorage.setItem('sap_ai_cfg', JSON.stringify(cfg)); }catch(e){} }
+  function saveHist(){ try{ localStorage.setItem('sap_ai_hist', JSON.stringify(history.slice(-100))); }catch(e){} }
+
+  /* ---------- settings UI ---------- */
+  function fillForm(){ FIELDS.forEach(f => { if($(f)) $(f).value = cfg[f] ?? ''; }); }
+  function readForm(){
+    FIELDS.forEach(f => { cfg[f] = $(f).value.trim(); });
+    cfg.maxTokens = parseInt(cfg.maxTokens)||1024;
+    cfg.historyLen = parseInt(cfg.historyLen)||20;
+  }
+  function setStatus(msg, ok){
+    const s = $('status'); s.textContent = msg; s.style.color = ok===true?'var(--ok)':ok===false?'var(--danger)':'var(--muted)';
+  }
+  function configured(){ return cfg.authUrl && cfg.clientId && cfg.clientSecret && cfg.apiUrl && cfg.deploymentId; }
+  function updateDot(state){ $('dot').className = 'dot ' + (state||''); }
+
+  /* ---------- SAP AI Core API ---------- */
+  const trimSlash = s => s.replace(/\/+$/,'');
+
+  async function getToken(force){
+    if(!force && token && Date.now() < tokenExp - 30000) return token;
+    let url = trimSlash(cfg.authUrl);
+    if(!/\/oauth\/token/.test(url)) url += '/oauth/token';
+    const res = await fetch(url, {
+      method:'POST',
+      headers:{
+        'Authorization':'Basic ' + btoa(cfg.clientId + ':' + cfg.clientSecret),
+        'Content-Type':'application/x-www-form-urlencoded'
+      },
+      body:'grant_type=client_credentials'
+    });
+    if(!res.ok) throw new Error('Gagal ambil token (' + res.status + '): ' + (await res.text()).slice(0,300));
+    const data = await res.json();
+    token = data.access_token;
+    tokenExp = Date.now() + (data.expires_in||3600)*1000;
+    return token;
+  }
+
+  async function callChat(messages, retry=true){
+    const t = await getToken();
+    const path = cfg.chatPath.replace('{deploymentId}', encodeURIComponent(cfg.deploymentId));
+    const res = await fetch(trimSlash(cfg.apiUrl) + path, {
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer ' + t,
+        'AI-Resource-Group': cfg.resourceGroup || 'default',
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify({ messages, max_completion_tokens: cfg.maxTokens })
+    });
+    if(res.status === 401 && retry){ token = null; await getToken(true); return callChat(messages, false); }
+    if(!res.ok) throw new Error('API error (' + res.status + '): ' + (await res.text()).slice(0,500));
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if(content == null) throw new Error('Respons tidak berisi choices[0].message.content:\n' + JSON.stringify(data).slice(0,400));
+    return content;
+  }
+
+  function buildMessages(){
+    const msgs = [];
+    if(cfg.systemPrompt) msgs.push({role:'system', content:cfg.systemPrompt});
+    return msgs.concat(history.slice(-cfg.historyLen));
+  }
+
+  /* ---------- rendering ---------- */
+  const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function md(text){
+    const blocks = [];
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,lang,code) => { blocks.push('<pre><code>'+esc(code.replace(/\n$/,''))+'</code></pre>'); return '\u0000'+(blocks.length-1)+'\u0000'; });
+    text = esc(text)
+      .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>')
+      .replace(/(^|\n)#{1,3} ([^\n]+)/g,'$1<b>$2</b>')
+      .replace(/(^|\n)[-*] /g,'$1• ')
+      .replace(/\n/g,'<br>');
+    return text.replace(/\u0000(\d+)\u0000/g,(_,i)=>blocks[i]);
+  }
+  function scrollDown(){ const c=$('chat'); c.scrollTop = c.scrollHeight; }
+  function addMsg(role, text){
+    const e = $('empty'); if(e) e.style.display='none';
+    const d = document.createElement('div');
+    d.className = 'msg ' + role;
+    if(role==='bot') d.innerHTML = md(text); else d.textContent = text;
+    $('chat').appendChild(d); scrollDown(); return d;
+  }
+  function renderAll(){
+    $('chat').querySelectorAll('.msg').forEach(n=>n.remove());
+    $('empty').style.display = history.length ? 'none' : '';
+    history.forEach(m => addMsg(m.role==='assistant'?'bot':'user', m.content));
+  }
+
+  /* ---------- send ---------- */
+  async function send(text){
+    if(busy || !text.trim()) return;
+    if(!configured()){ $('dlg').showModal(); return; }
+    busy = true; $('btnSend').disabled = true;
+    history.push({role:'user', content:text}); saveHist();
+    addMsg('user', text);
+    const typing = addMsg('bot',''); typing.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+    try{
+      const reply = await callChat(buildMessages());
+      typing.innerHTML = md(reply);
+      history.push({role:'assistant', content:reply}); saveHist();
+      updateDot('ok');
+    }catch(err){
+      typing.remove();
+      history.pop(); saveHist();
+      let m = err.message || String(err);
+      if(/Failed to fetch|NetworkError/i.test(m)) m += '\n\nKemungkinan diblokir CORS. Gunakan proxy backend (lihat catatan di Pengaturan).';
+      addMsg('error', m);
+      updateDot('err');
+    }finally{
+      busy = false; $('btnSend').disabled = false; scrollDown(); $('input').focus();
+    }
+  }
+
+  /* ---------- events ---------- */
+  $('composer').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('input').value; $('input').value=''; autosize(); send(v);
+  });
+  $('input').addEventListener('keydown', e => {
+    if(e.key==='Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); $('composer').requestSubmit(); }
+  });
+  function autosize(){ const t=$('input'); t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,140)+'px'; }
+  $('input').addEventListener('input', autosize);
+
+  $('btnSettings').onclick = () => { fillForm(); setStatus(''); $('dlg').showModal(); };
+  $('btnClose').onclick = () => $('dlg').close();
+  $('btnSave').onclick = () => { readForm(); saveCfg(); token=null; $('dlg').close(); updateDot(''); };
+  $('btnTest').onclick = async () => {
+    readForm(); token=null; setStatus('Mengetes…');
+    try{
+      await getToken(true); setStatus('Token OK. Mengetes chat…');
+      const r = await callChat([{role:'user', content:'Balas dengan satu kata: OK'}]);
+      setStatus('Berhasil ✔ Balasan: ' + r.slice(0,80), true); updateDot('ok');
+    }catch(e){ setStatus(e.message + (/Failed to fetch/i.test(e.message)?' (kemungkinan CORS)':''), false); updateDot('err'); }
+  };
+  $('btnClear').onclick = () => { if(!history.length || confirm('Hapus seluruh percakapan?')){ history=[]; saveHist(); renderAll(); } };
+
+  /* ---------- init ---------- */
+  load(); renderAll();
+  if(!configured()) setTimeout(()=>$('dlg').showModal(), 300);
+})();
+</script>
+</body>
+</html>
