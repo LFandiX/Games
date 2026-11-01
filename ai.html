@@ -2,114 +2,171 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Peacephile AI Chatbot</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1c2026">
+<title>Peacephile Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Palet: abu kabut dingin + arang + tembaga kekuningan. Ganti warna cukup di blok ini. */
   :root{
-    --bg:#0d1117; --panel:#151b23; --panel2:#1c2430; --border:#2a3441;
-    --text:#e6edf3; --muted:#8b98a8; --accent:#0a6ed1; --accent2:#3b9bff;
-    --user:#0a6ed1; --bot:#1c2430; --danger:#f85149; --ok:#3fb950;
+    --bg:#eceef1;          /* latar halaman */
+    --sheet:#fafbfc;       /* permukaan input & dialog */
+    --ink:#14181f;         /* teks */
+    --ink-soft:#586270;    /* teks sekunder */
+    --rule:#d2d7de;        /* garis */
+    --accent:#a8690f;      /* penanda & fokus */
+    --head:#1c2026;        /* header */
+    --tint:#f0e4cc;        /* pesan pengguna */
+    --btn:#1c2026;         /* tombol utama */
+    --btn-ink:#ffffff;
+    --alert:#a3382c;
+    --alert-tint:#f6e1de;
+    --ok:#a8690f;
+    --code:#1c2026;
+    --code-ink:#e9ecf0;
+    --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --serif:var(--sans);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
-  *{box-sizing:border-box}
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#101215; --sheet:#181b20; --ink:#e8eaee; --ink-soft:#9199a6; --rule:#2a2f37;
+      --accent:#e0a547; --head:#0b0c0e; --tint:#2d2719; --btn:#e0a547; --btn-ink:#14181f;
+      --alert:#ef8c80; --alert-tint:#3b2220; --ok:#e0a547; --code:#0b0c0e;
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;margin:0}
-  body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;height:100dvh}
-  header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--border)}
-  header h1{font-size:16px;margin:0;flex:1}
-  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
-  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
-  button{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:8px;padding:7px 12px}
-  button:hover{border-color:var(--accent2)}
-  button.primary{background:var(--accent);border-color:var(--accent)}
-  button:disabled{opacity:.5;cursor:not-allowed}
-  select#modelSel{font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 8px;max-width:46vw}
-  #chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
-  .msg{max-width:85%;padding:10px 14px;border-radius:14px;word-wrap:break-word;overflow-wrap:anywhere}
-  .msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:4px;white-space:pre-wrap}
-  .msg.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--border);border-bottom-left-radius:4px}
-  .msg.error{align-self:center;background:#3a1618;border:1px solid var(--danger);color:#ffb4ae;font-size:13px;white-space:pre-wrap}
-  .msg pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto;margin:8px 0;font-size:13px}
-  .msg code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
-  .msg :not(pre)>code{background:#0d1117;padding:1px 5px;border-radius:4px}
-  .empty{margin:auto;text-align:center;color:var(--muted);max-width:320px}
-  .empty h2{color:var(--text);margin-bottom:4px}
-  .typing span{display:inline-block;width:7px;height:7px;margin:0 2px;background:var(--muted);border-radius:50%;animation:b 1.2s infinite}
-  .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
-  @keyframes b{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
-  form#composer{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--border)}
-  textarea#input{flex:1;resize:none;max-height:140px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font:inherit;outline:none}
-  textarea#input:focus{border-color:var(--accent2)}
-  /* settings */
-  dialog{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:14px;width:min(520px,94vw);padding:0;max-height:92dvh}
-  dialog::backdrop{background:rgba(0,0,0,.6)}
-  .dlg{padding:18px;display:flex;flex-direction:column;gap:10px}
-  .dlg h2{margin:0 0 4px;font-size:17px}
-  label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
-  input[type=text],input[type=password],input[type=number],textarea.sys{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font:inherit;width:100%}
-  .row{display:flex;gap:8px}.row>*{flex:1}
-  .hint{font-size:12px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
-  .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
-  #status{font-size:12px;min-height:16px}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);
+       display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+
+  /* ---------- header ---------- */
+  header{background:var(--head);color:#eef0f3;display:flex;align-items:center;gap:6px;
+         padding:10px 8px 10px 18px;padding-top:calc(10px + env(safe-area-inset-top))}
+  .brand{flex:1;min-width:0;line-height:1.25}
+  .brand b{display:block;font:700 18px/1.2 var(--sans);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand small{display:flex;align-items:center;gap:6px;font-size:12px;color:#9aa2af}
+  .led{width:7px;height:7px;border-radius:50%;background:#6c7480}
+  .led.ok{background:#8ab4ff}.led.err{background:#ff8a80}
+  header button{background:transparent;border:0;color:#c9ced6;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;cursor:pointer}
+  header button:hover{background:rgba(255,255,255,.09)}
+  header svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- percakapan ---------- */
+  #chat{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+        padding:20px max(16px,calc((100% - 740px)/2));display:flex;flex-direction:column;gap:20px}
+  .msg{overflow-wrap:anywhere;word-wrap:break-word}
+  .msg.user{align-self:flex-end;max-width:86%;background:var(--tint);padding:9px 14px;
+            border-radius:14px 14px 3px 14px;white-space:pre-wrap}
+  .msg.bot{align-self:stretch;border-left:2px solid var(--accent);padding:1px 0 1px 14px}
+  .msg.error{align-self:stretch;border-left:2px solid var(--alert);background:var(--alert-tint);
+             padding:10px 14px;font-size:14px;white-space:pre-wrap;border-radius:0 8px 8px 0}
+  .msg pre{background:var(--code);color:var(--code-ink);border-radius:8px;padding:12px 14px;overflow-x:auto;
+           margin:10px 0;font:13px/1.5 var(--mono);-webkit-overflow-scrolling:touch}
+  .msg code{font-family:var(--mono);font-size:.88em}
+  .msg :not(pre)>code{background:var(--tint);padding:1px 6px;border-radius:4px}
+
+  .empty{margin:auto;max-width:320px;padding:0 8px;text-align:left}
+  .empty h2{font:700 27px/1.2 var(--sans);letter-spacing:-.02em;margin:0 0 8px}
+  .empty p{margin:0;color:var(--ink-soft)}
+
+  .typing{display:inline-flex;gap:5px;padding:6px 0}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.35;animation:pulse 1.1s infinite}
+  .typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+  @keyframes pulse{0%,70%,100%{opacity:.3}35%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.typing i{animation:none;opacity:.7}}
+
+  /* ---------- input ---------- */
+  form#composer{background:var(--bg);border-top:1px solid var(--rule);
+                padding:10px max(12px,calc((100% - 740px)/2)) calc(10px + env(safe-area-inset-bottom));
+                display:flex;align-items:flex-end;gap:8px}
+  .field{flex:1;display:flex;background:var(--sheet);border:1px solid var(--rule);border-radius:10px}
+  .field:focus-within{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  textarea#input{flex:1;resize:none;max-height:150px;min-height:46px;background:transparent;color:var(--ink);
+                 border:0;outline:0;padding:11px 14px;font:inherit}
+  textarea#input::placeholder{color:var(--ink-soft)}
+  #btnSend{width:46px;height:46px;flex:none;border:0;border-radius:10px;background:var(--btn);color:var(--btn-ink);
+           display:grid;place-items:center;cursor:pointer}
+  #btnSend:disabled{opacity:.45;cursor:default}
+  #btnSend svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- pengaturan ---------- */
+  dialog{background:var(--sheet);color:var(--ink);border:1px solid var(--rule);border-radius:12px;
+         width:min(460px,94vw);padding:0;max-height:92dvh}
+  dialog::backdrop{background:rgba(16,21,14,.6)}
+  .dlg{padding:20px;display:flex;flex-direction:column;gap:14px}
+  .dlg h2{font:700 20px/1.2 var(--sans);letter-spacing:-.01em;margin:0}
+  label{font-size:13px;color:var(--ink-soft);display:flex;flex-direction:column;gap:5px}
+  input[type=text],input[type=number],textarea.sys{background:var(--bg);color:var(--ink);border:1px solid var(--rule);
+         border-radius:8px;padding:10px 12px;font:inherit;width:100%;min-height:44px}
+  input:focus,textarea.sys:focus{outline:2px solid var(--accent);outline-offset:-1px}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .hint{font-size:13px;color:var(--ink-soft);margin:0}
+  #status{font-size:13px;min-height:18px;word-break:break-word}
+  .actions{display:flex;gap:8px;justify-content:flex-end}
+  .actions button{min-height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--rule);
+                  background:transparent;color:var(--ink);font:inherit;cursor:pointer}
+  .actions button.primary{background:var(--btn);border-color:var(--btn);color:var(--btn-ink)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  @media (max-width:600px){
+    dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border:0;border-radius:0}
+    .dlg{min-height:100%;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+    .actions button{flex:1}
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <span class="dot" id="dot"></span>
-  <h1>Peacephile AI Chatbot</h1>
-  <select id="modelSel" title="Pilih model" style="display:none"></select>
-  <button id="btnClear" title="Hapus percakapan">Bersihkan</button>
-  <button id="btnSettings" class="primary">⚙ Pengaturan</button>
+  <div class="brand">
+    <b>Peacephile</b>
+    <small><span class="led" id="led"></span><span id="ledText">Asisten siap</span></small>
+  </div>
+  <button id="btnClear" title="Hapus percakapan" aria-label="Hapus percakapan">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+  </button>
+  <button id="btnSettings" title="Pengaturan" aria-label="Pengaturan">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
 </header>
 
 <main id="chat">
   <div class="empty" id="empty">
-    <h2>Halo 👋</h2>
-    <p>Selamat datang di Chatbot Peacephile</p>
+    <h2>Ada yang bisa dibantu?</h2>
+    <p>Tulis pertanyaan atau tugasmu di kolom bawah.</p>
   </div>
 </main>
 
 <form id="composer">
-  <textarea id="input" rows="1" placeholder="Ketik pesan…" enterkeyhint="send"></textarea>
-  <button class="primary" id="btnSend" type="submit">Kirim</button>
+  <div class="field">
+    <textarea id="input" rows="1" placeholder="Tulis pesan" enterkeyhint="send" aria-label="Pesan"></textarea>
+  </div>
+  <button id="btnSend" type="submit" aria-label="Kirim">
+    <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
 </form>
 
 <dialog id="dlg">
   <div class="dlg">
-    <h2>Pengaturan SAP AI Core</h2>
-    <label>Proxy URL (disarankan — jika diisi, kolom koneksi langsung di bawah diabaikan)
-      <input type="text" id="proxyUrl" placeholder="https://sap-ai-proxy.namaanda.workers.dev">
-    </label>
-    <div class="hint">Mode langsung (tanpa proxy) hanya jalan jika server mengizinkan CORS. Kosongkan Proxy URL untuk mode langsung.</div>
-    <label>Auth URL (token endpoint, dari service key)
-      <input type="text" id="authUrl" placeholder="https://xxx.authentication.eu10.hana.ondemand.com">
+    <h2>Pengaturan</h2>
+    <label>Alamat server
+      <input type="text" id="proxyUrl" inputmode="url" autocapitalize="off" autocomplete="off">
     </label>
     <div class="row">
-      <label>Client ID <input type="text" id="clientId" autocomplete="off"></label>
-      <label>Client Secret <input type="password" id="clientSecret" autocomplete="off"></label>
+      <label>Panjang jawaban maks. <input type="number" id="maxTokens" inputmode="numeric" min="1"></label>
+      <label>Riwayat dikirim <input type="number" id="historyLen" inputmode="numeric" min="1"></label>
     </div>
-    <label>AI_API_URL (serviceurls.AI_API_URL)
-      <input type="text" id="apiUrl" placeholder="https://api.ai.prod.eu-central-1.aws.ml.hana.ondemand.com">
+    <label>Instruksi tetap (opsional)
+      <textarea class="sys" id="systemPrompt" rows="3" placeholder="Contoh: Jawab singkat dalam bahasa Indonesia."></textarea>
     </label>
-    <div class="row">
-      <label>Deployment ID <input type="text" id="deploymentId" placeholder="d123abc456"></label>
-      <label>Resource Group <input type="text" id="resourceGroup" value="default"></label>
-    </div>
-    <label>Path endpoint chat (<code>{deploymentId}</code> diganti otomatis)
-      <input type="text" id="chatPath" value="/v2/inference/deployments/{deploymentId}/chat/completions">
-    </label>
-    <div class="row">
-      <label>max_completion_tokens <input type="number" id="maxTokens" value="1024" min="1"></label>
-      <label>Riwayat dikirim (pesan) <input type="number" id="historyLen" value="20" min="1"></label>
-    </div>
-    <label>System prompt (opsional)
-      <textarea class="sys" id="systemPrompt" rows="2" placeholder="Kamu adalah asisten yang membantu…"></textarea>
-    </label>
-    <div class="hint">
-      ⚠️ Kredensial disimpan di browser (localStorage) perangkat ini saja. SAP AI Core umumnya <b>tidak mengizinkan CORS</b> dari browser — jika muncul "Failed to fetch", jalankan lewat proxy backend dan isi Auth URL / AI_API_URL dengan alamat proxy kamu. Untuk produksi, simpan client secret di server, bukan di sini.
-    </div>
-    <div id="status"></div>
+    <p class="hint">Percakapan hanya tersimpan di perangkat ini.</p>
+    <div id="status" role="status"></div>
     <div class="actions">
-      <button id="btnTest" type="button">Tes Koneksi</button>
+      <button id="btnTest" type="button">Tes koneksi</button>
       <button id="btnClose" type="button">Batal</button>
       <button id="btnSave" type="button" class="primary">Simpan</button>
     </div>
@@ -119,63 +176,155 @@
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  // >>> Isi dengan alamat worker Cloudflare Anda, contoh: 'https://curly-resonance-1cae.NAMA.workers.dev'
+
+  // ====== KONFIGURASI STATIS ======
   const DEFAULT_PROXY = 'https://curly-resonance-1cae.alfandiwijaya8.workers.dev';
-  const FIELDS = ['proxyUrl','authUrl','clientId','clientSecret','apiUrl','deploymentId','resourceGroup','chatPath','maxTokens','historyLen','systemPrompt'];
-  const DEFAULTS = {resourceGroup:'default',chatPath:'/v2/inference/deployments/{deploymentId}/chat/completions',maxTokens:1024,historyLen:20};
+  const FIXED_MODEL   = 'claude';   // id model pada MODELS di worker (dikunci)
+  // =================================
+
+  const FIELDS = ['proxyUrl','maxTokens','historyLen','systemPrompt'];
+  const DEFAULTS = {proxyUrl:DEFAULT_PROXY,maxTokens:1024,historyLen:20,systemPrompt:''};
   let cfg = {...DEFAULTS};
   let history = [];
-  let token = null, tokenExp = 0, busy = false;
+  let busy = false;
+  const coarse = window.matchMedia && matchMedia('(pointer:coarse)').matches;
 
-  /* ---------- storage ---------- */
+  /* ---------- penyimpanan ---------- */
+  const rd = (k, old) => { try{ return localStorage.getItem(k) ?? localStorage.getItem(old); }catch(e){ return null; } };
   function load(){
-    try{ cfg = {...DEFAULTS, ...JSON.parse(localStorage.getItem('sap_ai_cfg')||'{}')}; }catch(e){}
-    if(DEFAULT_PROXY && !cfg.proxyUrl) cfg.proxyUrl = DEFAULT_PROXY;
-    try{ history = JSON.parse(localStorage.getItem('sap_ai_hist')||'[]'); }catch(e){ history = []; }
+    try{ cfg = {...DEFAULTS, ...JSON.parse(rd('pp_cfg','sap_ai_cfg')||'{}')}; }catch(e){}
+    if(!cfg.proxyUrl) cfg.proxyUrl = DEFAULT_PROXY;
+    try{ history = JSON.parse(rd('pp_hist','sap_ai_hist')||'[]'); }catch(e){ history = []; }
   }
-  function saveCfg(){ try{ localStorage.setItem('sap_ai_cfg', JSON.stringify(cfg)); }catch(e){} }
-  function saveHist(){ try{ localStorage.setItem('sap_ai_hist', JSON.stringify(history.slice(-100))); }catch(e){} }
+  function saveCfg(){ try{ localStorage.setItem('pp_cfg', JSON.stringify(cfg)); }catch(e){} }
+  function saveHist(){ try{ localStorage.setItem('pp_hist', JSON.stringify(history.slice(-100))); }catch(e){} }
 
-  /* ---------- settings UI ---------- */
-  function fillForm(){ FIELDS.forEach(f => { if($(f)) $(f).value = cfg[f] ?? ''; }); }
+  /* ---------- pengaturan ---------- */
+  function fillForm(){ FIELDS.forEach(f => { $(f).value = cfg[f] ?? ''; }); }
   function readForm(){
     FIELDS.forEach(f => { cfg[f] = $(f).value.trim(); });
+    cfg.proxyUrl = cfg.proxyUrl || DEFAULT_PROXY;
     cfg.maxTokens = parseInt(cfg.maxTokens)||1024;
     cfg.historyLen = parseInt(cfg.historyLen)||20;
   }
   function setStatus(msg, ok){
-    const s = $('status'); s.textContent = msg; s.style.color = ok===true?'var(--ok)':ok===false?'var(--danger)':'var(--muted)';
+    const s = $('status'); s.textContent = msg;
+    s.style.color = ok===true?'var(--ok)':ok===false?'var(--alert)':'var(--ink-soft)';
   }
-  function configured(){ return cfg.proxyUrl || cfg.authUrl && cfg.clientId && cfg.clientSecret && cfg.apiUrl && cfg.deploymentId; }
-  function updateDot(state){ $('dot').className = 'dot ' + (state||''); }
+  function led(state, text){
+    $('led').className = 'led ' + (state||'');
+    $('ledText').textContent = text;
+  }
 
-  /* ---------- SAP AI Core API ---------- */
+  /* ---------- API ---------- */
   const trimSlash = s => s.replace(/\/+$/,'');
-
-  async function getToken(force){
-    if(!force && token && Date.now() < tokenExp - 30000) return token;
-    let url = trimSlash(cfg.authUrl);
-    if(!/\/oauth\/token/.test(url)) url += '/oauth/token';
-    const res = await fetch(url, {
+  async function callChat(messages){
+    const res = await fetch(trimSlash(cfg.proxyUrl) + '/chat', {
       method:'POST',
-      headers:{
-        'Authorization':'Basic ' + btoa(cfg.clientId + ':' + cfg.clientSecret),
-        'Content-Type':'application/x-www-form-urlencoded'
-      },
-      body:'grant_type=client_credentials'
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ messages, max_completion_tokens: cfg.maxTokens, model: FIXED_MODEL })
     });
-    if(!res.ok) throw new Error('Gagal ambil token (' + res.status + '): ' + (await res.text()).slice(0,300));
+    if(!res.ok) throw new Error('Server menjawab dengan kode ' + res.status + '.\n' + (await res.text()).slice(0,400));
     const data = await res.json();
-    token = data.access_token;
-    tokenExp = Date.now() + (data.expires_in||3600)*1000;
-    return token;
+    const content = data?.choices?.[0]?.message?.content;
+    if(content == null) throw new Error('Jawaban dari server tidak lengkap.\n' + JSON.stringify(data).slice(0,300));
+    return content;
+  }
+  function buildMessages(){
+    const msgs = [];
+    if(cfg.systemPrompt) msgs.push({role:'system', content:cfg.systemPrompt});
+    return msgs.concat(history.slice(-cfg.historyLen));
   }
 
-  async function callChat(messages, retry=true){
-    if(cfg.proxyUrl){
-      const res = await fetch(trimSlash(cfg.proxyUrl) + '/chat', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
+  /* ---------- tampilan ---------- */
+  const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function md(text){
+    const blocks = [];
+    text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,lang,code) => { blocks.push('<pre><code>'+esc(code.replace(/\n$/,''))+'</code></pre>'); return '\u0000'+(blocks.length-1)+'\u0000'; });
+    text = esc(text)
+      .replace(/`([^`\n]+)`/g,'<code>$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>')
+      .replace(/(^|\n)#{1,3} ([^\n]+)/g,'$1<b>$2</b>')
+      .replace(/(^|\n)[-*] /g,'$1• ')
+      .replace(/\n/g,'<br>');
+    return text.replace(/\u0000(\d+)\u0000/g,(_,i)=>blocks[i]);
+  }
+  function scrollDown(){ const c=$('chat'); c.scrollTop = c.scrollHeight; }
+  function addMsg(role, text){
+    $('empty').style.display='none';
+    const d = document.createElement('div');
+    d.className = 'msg ' + role;
+    if(role==='bot') d.innerHTML = md(text); else d.textContent = text;
+    $('chat').appendChild(d); scrollDown(); return d;
+  }
+  function renderAll(){
+    $('chat').querySelectorAll('.msg').forEach(n=>n.remove());
+    $('empty').style.display = history.length ? 'none' : '';
+    history.forEach(m => addMsg(m.role==='assistant'?'bot':'user', m.content));
+  }
+
+  /* ---------- kirim ---------- */
+  async function send(text){
+    if(busy || !text.trim()) return;
+    busy = true; $('btnSend').disabled = true;
+    history.push({role:'user', content:text}); saveHist();
+    addMsg('user', text);
+    const pending = addMsg('bot','');
+    pending.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+    led('', 'Sedang menjawab');
+    try{
+      const reply = await callChat(buildMessages());
+      pending.innerHTML = md(reply);
+      history.push({role:'assistant', content:reply}); saveHist();
+      led('ok', 'Asisten siap');
+    }catch(err){
+      pending.remove();
+      history.pop(); saveHist();
+      let m = err.message || String(err);
+      if(/Failed to fetch|NetworkError|Load failed/i.test(m)) m = 'Server tidak bisa dihubungi. Periksa koneksi internet, lalu coba kirim lagi.';
+      addMsg('error', m);
+      led('err', 'Gagal terhubung');
+    }finally{
+      busy = false; $('btnSend').disabled = false; scrollDown();
+      if(!coarse) $('input').focus();
+    }
+  }
+
+  /* ---------- event ---------- */
+  function autosize(){ const t=$('input'); t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,150)+'px'; }
+  $('composer').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = $('input').value; $('input').value=''; autosize(); send(v);
+  });
+  // Desktop: Enter mengirim, Shift+Enter baris baru. HP: Enter baris baru, kirim lewat tombol.
+  $('input').addEventListener('keydown', e => {
+    if(e.key==='Enter' && !e.shiftKey && !e.isComposing && !coarse){ e.preventDefault(); $('composer').requestSubmit(); }
+  });
+  $('input').addEventListener('input', autosize);
+  $('input').addEventListener('focus', () => setTimeout(scrollDown, 300));
+
+  $('btnSettings').onclick = () => { fillForm(); setStatus(''); $('dlg').showModal(); };
+  $('btnClose').onclick = () => $('dlg').close();
+  $('btnSave').onclick = () => { readForm(); saveCfg(); $('dlg').close(); };
+  $('btnTest').onclick = async () => {
+    readForm(); setStatus('Menguji koneksi…');
+    try{
+      await callChat([{role:'user', content:'Balas dengan satu kata: OK'}]);
+      setStatus('Terhubung.', true); led('ok','Asisten siap');
+    }catch(e){ setStatus(e.message, false); led('err','Gagal terhubung'); }
+  };
+  $('btnClear').onclick = () => {
+    if(!history.length) return;
+    if(confirm('Hapus seluruh percakapan?')){ history=[]; saveHist(); renderAll(); }
+  };
+
+  /* ---------- mulai ---------- */
+  load(); renderAll(); led('', 'Asisten siap');
+})();
+</script>
+</body>
+</html>
+t-Type':'application/json'},
         body: JSON.stringify({ messages, max_completion_tokens: cfg.maxTokens, model: cfg.model || undefined })
       });
       if(!res.ok) throw new Error('Proxy error (' + res.status + '): ' + (await res.text()).slice(0,500));
