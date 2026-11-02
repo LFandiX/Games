@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tebak Impostor</title>
+<style>
+:root{
+  --bg:#0f1220;--panel:#181c30;--panel2:#20253f;--line:#2c3256;
+  --text:#eef0ff;--muted:#9aa0c7;--accent:#7c6cff;--accent2:#ff5ca8;
+  --ok:#3ddc97;--bad:#ff5c6c;--warn:#ffc857;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;min-height:100dvh;background:radial-gradient(900px 500px at 10% -10%,#2a2470 0%,transparent 60%),radial-gradient(800px 500px at 100% 0,#5a1f58 0%,transparent 55%),var(--bg)}
+#app{max-width:520px;margin:0 auto;padding:16px 16px 40px}
+h1{font-size:30px;margin:8px 0 4px;letter-spacing:-.5px}
+h2{font-size:22px;margin:4px 0 6px}
+p{color:var(--muted);line-height:1.5;margin:6px 0}
+.screen{display:none;animation:fade .35s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;margin:14px 0}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+input{width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font-size:16px;outline:none}
+input:focus{border-color:var(--accent)}
+.code-in{text-transform:uppercase;letter-spacing:6px;text-align:center;font-weight:700}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:transform .1s,opacity .2s}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--text)}
+button.small{padding:8px 12px;font-size:13px;border-radius:10px}
+button.block{width:100%}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.divider{text-align:center;color:var(--muted);font-size:13px;margin:14px 0}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:8px}
+#banner{background:#3a2a10;border:1px solid var(--warn);color:var(--warn);padding:12px 14px;border-radius:14px;margin-bottom:12px;font-size:14px;line-height:1.5}
+#roomBar{display:none;justify-content:space-between;align-items:center;margin-bottom:6px}
+#roomBar.on{display:flex}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.chip b{color:var(--text);letter-spacing:2px}
+.code-big{font-size:44px;font-weight:800;letter-spacing:10px;text-align:center;margin:6px 0;background:linear-gradient(135deg,#b6acff,#ff9ccb);-webkit-background-clip:text;background-clip:text;color:transparent}
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ul.list li{display:flex;align-items:center;gap:12px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;flex:none}
+.grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{font-size:11px;padding:3px 8px;border-radius:999px;background:#2e3466;color:#cfd3ff}
+.badge.warn{background:#4a3a14;color:var(--warn)}
+.badge.ok{background:#14402f;color:var(--ok)}
+.badge.bad{background:#4a1a22;color:var(--bad)}
+li.off{opacity:.45}
+li.now{border-color:var(--accent);box-shadow:0 0 0 2px #7c6cff55;animation:pulse 1.6s infinite}
+li.done{opacity:.6}
+@keyframes pulse{50%{box-shadow:0 0 0 5px #7c6cff22}}
+.status{text-align:center;color:var(--muted);font-size:14px;margin:10px 0}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:14px}
+
+/* kartu kata */
+.card-wrap{perspective:1000px;width:min(78vw,290px);height:370px;margin:18px auto;cursor:pointer;user-select:none}
+.card{position:relative;width:100%;height:100%;transition:transform .8s cubic-bezier(.2,.9,.25,1);transform-style:preserve-3d}
+.card.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:26px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center;box-shadow:0 20px 50px #0008}
+.front{background:linear-gradient(160deg,#3a2f9e,#8b2f7e);border:2px solid #ffffff22;overflow:hidden}
+.front::after{content:"";position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 40%,#ffffff22 50%,transparent 60%);animation:shine 3.2s infinite}
+@keyframes shine{from{transform:translateX(-60%)}to{transform:translateX(60%)}}
+.front .lock{font-size:64px;margin-bottom:10px}
+.back{transform:rotateY(180deg);background:linear-gradient(160deg,#fff,#e8e4ff);color:#1b1740}
+.back .word{font-size:34px;font-weight:800;line-height:1.15;word-break:break-word}
+.back small,.front small{opacity:.7;margin-top:14px}
+
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick button{background:var(--panel2);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px}
+.pick button.sel{border-color:var(--accent2);background:#3a1f4a;transform:scale(1.03)}
+.bar{height:8px;border-radius:999px;background:#2c3256;overflow:hidden;margin-top:6px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .8s}
+.result-title{font-size:34px;font-weight:900;text-align:center;margin:6px 0}
+.win{color:var(--ok)}.lose{color:var(--bad)}
+.words{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.words div{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+.words span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.words b{font-size:18px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:#000c;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;transition:transform .3s;z-index:9;max-width:90vw}
+#toast.on{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="banner" hidden></div>
+
+  <div id="roomBar">
+    <span class="chip">Room <b id="barCode"></b></span>
+    <button class="ghost small" id="leaveBtn">Keluar</button>
+  </div>
+
+  <!-- HOME -->
+  <section id="s-home" class="screen">
+    <h1>🕵️ Tebak Impostor</h1>
+    <p>Semua pemain dapat kata yang sama, kecuali satu orang. Diskusi, lalu vote siapa impostornya!</p>
+    <div class="panel">
+      <label for="nameIn">Nama kamu</label>
+      <input id="nameIn" maxlength="14" placeholder="mis. Budi" autocomplete="off">
+      <button class="block" id="createBtn" style="margin-top:14px">Buat Room Baru</button>
+      <div class="divider">— atau gabung —</div>
+      <input id="codeIn" class="code-in" maxlength="4" placeholder="KODE" autocomplete="off">
+      <button class="block ghost" id="joinBtn" style="margin-top:10px">Gabung Room</button>
+      <div class="err" id="homeErr"></div>
+    </div>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="s-lobby" class="screen">
+    <h2 style="text-align:center">Lobby</h2>
+    <div class="code-big" id="lobbyCode"></div>
+    <div class="row" style="justify-content:center">
+      <button class="ghost small" id="copyBtn" style="flex:none">📋 Salin link undangan</button>
+    </div>
+    <div class="panel">
+      <div class="row" style="margin-bottom:10px"><b>Pemain</b><span class="status" style="text-align:right;margin:0" id="lobbyCount"></span></div>
+      <ul class="list" id="lobbyList"></ul>
+    </div>
+    <div id="hostOnly" hidden>
+      <details>
+        <summary>⚙️ Kata custom (opsional)</summary>
+        <label>Kata untuk warga</label><input id="cwA" maxlength="30" placeholder="mis. Kopi">
+        <label>Kata untuk impostor</label><input id="cwB" maxlength="30" placeholder="mis. Teh">
+        <p>Kosongkan keduanya untuk memakai kata acak.</p>
+      </details>
+      <button class="block" id="startBtn" style="margin-top:16px">Mulai Game</button>
+    </div>
+    <p class="status" id="waitHost" hidden>Menunggu host memulai game…</p>
+  </section>
+
+  <!-- KATA -->
+  <section id="s-word" class="screen">
+    <h2 style="text-align:center">Lihat Katamu</h2>
+    <p style="text-align:center">Ketuk kartu untuk membuka dan menutup. Jangan sampai ada yang lihat!</p>
+    <div class="card-wrap" id="cardWrap">
+      <div class="card" id="card">
+        <div class="face front"><div class="lock">🔒</div><b style="font-size:20px">Kata Rahasia</b><small>Ketuk untuk membuka</small></div>
+        <div class="face back"><small style="margin:0 0 10px">Katamu:</small><div class="word" id="wordText"></div><small>Ketuk untuk menutup</small></div>
+      </div>
+    </div>
+    <button class="block" id="readyWordBtn" disabled>Buka kartu dulu</button>
+    <p class="status" id="wordStatus"></p>
+  </section>
+
+  <!-- DISKUSI -->
+  <section id="s-discussion" class="screen">
+    <h2>💬 Diskusi</h2>
+    <p>Bergiliran, sebutkan satu petunjuk tentang katamu tanpa menyebut katanya langsung. Cari tahu siapa yang katanya berbeda!</p>
+    <div class="panel">
+      <b>Urutan giliran</b>
+      <ul class="list" id="turnList" style="margin-top:10px"></ul>
+      <button class="block" id="nextTurnBtn" style="margin-top:12px" hidden></button>
+    </div>
+    <div class="row">
+      <button class="ghost" id="peekBtn">👁️ Lihat kataku</button>
+      <button id="readyDiscBtn">Siap Voting</button>
+    </div>
+    <p class="status" id="peekText" hidden></p>
+    <p class="status" id="discStatus"></p>
+  </section>
+
+  <!-- VOTING -->
+  <section id="s-voting" class="screen">
+    <h2>🗳️ Voting</h2>
+    <p>Pilih siapa yang menurutmu impostor. Kamu masih bisa mengganti pilihan sebelum semua selesai.</p>
+    <div class="pick" id="pickGrid"></div>
+    <p class="status" id="voteStatus"></p>
+  </section>
+
+  <!-- HASIL -->
+  <section id="s-result" class="screen">
+    <div class="result-title" id="resTitle"></div>
+    <p style="text-align:center" id="resSub"></p>
+    <div class="panel">
+      <b>Kata</b>
+      <div class="words">
+        <div><span>Warga</span><b id="resCiv"></b></div>
+        <div><span>Impostor</span><b id="resImp"></b></div>
+      </div>
+    </div>
+    <div class="panel">
+      <b>Hasil vote</b>
+      <ul class="list" id="resTally" style="margin-top:10px"></ul>
+      <details><summary>Siapa memilih siapa</summary><ul class="list" id="resVotes" style="margin-top:10px"></ul></details>
+    </div>
+    <button class="block" id="backLobbyBtn">Kembali ke Lobby</button>
+    <p class="status" id="resWait" hidden>Menunggu host membawa semua kembali ke lobby…</p>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getDatabase, ref, get, set, update, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
+
+/* ============ ISI KONFIGURASI FIREBASE KAMU DI SINI ============ */
+const firebaseConfig = {
+  apiKey: "ISI_API_KEY",
+  authDomain: "ISI_PROJECT.firebaseapp.com",
+  databaseURL: "https://ISI_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ISI_PROJECT",
+  appId: "ISI_APP_ID"
+};
+/* ================================================================= */
+
+const WORD_PAIRS = [
+  ["Kopi","Teh"],["Bakso","Mie Ayam"],["Kucing","Anjing"],["Motor","Sepeda"],["Pantai","Danau"],
+  ["Nasi Goreng","Mie Goreng"],["Dokter","Perawat"],["Guru","Dosen"],["Hujan","Badai"],["Pizza","Burger"],
+  ["Bioskop","Teater"],["Sepatu","Sandal"],["Matahari","Bulan"],["Gunung","Bukit"],["Kereta","Bus"],
+  ["Sate","Kebab"],["Laptop","Tablet"],["Facebook","Instagram"],["Raja","Presiden"],["Apel","Pir"],
+  ["Pensil","Pulpen"],["Hotel","Penginapan"],["Mobil","Truk"],["Singa","Harimau"],["Sungai","Laut"],
+  ["Rumah Sakit","Puskesmas"],["Gitar","Ukulele"],["Sendok","Garpu"],["Ayam Goreng","Bebek Goreng"],
+  ["Pesawat","Helikopter"],["Mie Instan","Spaghetti"],["Restoran","Warung"],["Ojek","Taksi"],
+  ["Cokelat","Permen"],["Jam Tangan","Gelang"],["Sekolah","Kampus"],["Pasar","Supermarket"],
+  ["Es Krim","Es Serut"],["Sabun","Sampo"],["Kulkas","Freezer"]
+];
+const MIN_PLAYERS = 3, MAX_PLAYERS = 12;
+
+const $ = s => document.querySelector(s);
+const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const rand = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const genCode = () => { const c = "ABCDEFGHJKLMNPQRSTUVWXYZ"; return Array.from({length:4}, () => rand([...c])).join(""); };
+const colorOf = id => { let n = 0; for (const ch of id) n = (n * 31 + ch.charCodeAt(0)) % 360; return `hsl(${n} 65% 45%)`; };
+let toastT; const toast = m => { const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 2200); };
+
+const configured = !firebaseConfig.apiKey.startsWith("ISI_");
+let db;
+if (configured) { db = getDatabase(initializeApp(firebaseConfig)); }
+else {
+  const b = $("#banner"); b.hidden = false;
+  b.textContent = "Firebase belum dikonfigurasi. Buka index.html, lalu isi objek firebaseConfig di bagian atas script.";
+  $("#createBtn").disabled = true; $("#joinBtn").disabled = true;
+}
+
+const pid = localStorage.getItem("pid") || (() => { const v = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); localStorage.setItem("pid", v); return v; })();
+$("#nameIn").value = localStorage.getItem("name") || "";
+const urlRoom = new URLSearchParams(location.search).get("room");
+if (urlRoom) $("#codeIn").value = urlRoom.toUpperCase().slice(0, 4);
+
+let code = null, room = null, unsubRoom = null, unsubConn = null;
+let flipped = false, seenCard = false, lastPhase = null;
+
+/* ---------- navigasi layar ---------- */
+function show(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + name));
+  $("#roomBar").classList.toggle("on", name !== "home");
+}
+
+/* ---------- helper data ---------- */
+const roomRef = () => ref(db, `rooms/${code}`);
+function allPlayers() {
+  return Object.entries(room?.players || {}).map(([id, p]) => ({ id, ...p })).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+}
+const online = p => p.online !== false;
+const activePlayers = () => allPlayers().filter(p => p.inGame && online(p));
+const hostId = () => allPlayers().find(online)?.id;
+const isHost = () => hostId() === pid;
+const nameOf = id => room?.players?.[id]?.name || "?";
+
+/* ---------- masuk / keluar room ---------- */
+function enterRoom(c) {
+  code = c; localStorage.setItem("room", c); lastPhase = null;
+  const onlineRef = ref(db, `rooms/${c}/players/${pid}/online`);
+  unsubConn = onValue(ref(db, ".info/connected"), s => {
+    if (s.val() === true) { onDisconnect(onlineRef).set(false); set(onlineRef, true); }
+  });
+  unsubRoom = onValue(roomRef(), s => {
+    room = s.val();
+    if (!room) return leaveLocal("Room sudah ditutup.");
+    if (!room.players?.[pid]) return leaveLocal("Kamu tidak lagi ada di room ini.");
+    render();
+  });
+  $("#barCode").textContent = c;
+}
+function leaveLocal(msg) {
+  if (unsubRoom) unsubRoom(); if (unsubConn) unsubConn();
+  unsubRoom = unsubConn = null; code = null; room = null;
+  localStorage.removeItem("room");
+  history.replaceState(null, "", location.pathname);
+  show("home"); if (msg) $("#homeErr").textContent = msg;
+}
+async function leaveRoom() {
+  if (!code) return;
+  const c = code, wasLobby = room?.phase === "lobby";
+  const onlineRef = ref(db, `rooms/${c}/players/${pid}/online`);
+  if (unsubRoom) unsubRoom(); if (unsubConn) unsubConn();
+  unsubRoom = unsubConn = null;
+  try { await onDisconnect(onlineRef).cancel(); } catch {}
+  try {
+    if (wasLobby) await remove(ref(db, `rooms/${c}/players/${pid}`));
+    else await set(onlineRef, false);
+  } catch {}
+  leaveLocal();
+}
+
+async function createRoom() {
+  const name = $("#nameIn").value.trim();
+  if (!name) return ($("#homeErr").textContent = "Isi nama dulu.");
+  localStorage.setItem("name", name); $("#homeErr").textContent = "";
+  try {
+    let c;
+    for (let i = 0; i < 6; i++) { c = genCode(); if (!(await get(ref(db, `rooms/${c}`))).exists()) break; }
+    await set(ref(db, `rooms/${c}`), { phase: "lobby", createdAt: Date.now(), players: { [pid]: { name, joinedAt: Date.now(), online: true } } });
+    enterRoom(c);
+  } catch (e) { $("#homeErr").textContent = "Gagal membuat room: " + e.message; }
+}
+async function joinRoom() {
+  const name = $("#nameIn").value.trim(), c = $("#codeIn").value.trim().toUpperCase();
+  if (!name) return ($("#homeErr").textContent = "Isi nama dulu.");
+  if (c.length !== 4) return ($("#homeErr").textContent = "Kode room terdiri dari 4 huruf.");
+  localStorage.setItem("name", name); $("#homeErr").textContent = "";
+  try {
+    const snap = await get(ref(db, `rooms/${c}`));
+    if (!snap.exists()) return ($("#homeErr").textContent = "Room tidak ditemukan.");
+    const r = snap.val(), players = r.players || {};
+    if (!players[pid]) {
+      if (r.phase !== "lobby") return ($("#homeErr").textContent = "Game di room ini sedang berjalan.");
+      if (Object.keys(players).length >= MAX_PLAYERS) return ($("#homeErr").textContent = "Room penuh.");
+      if (Object.values(players).some(p => p.online !== false && p.name.toLowerCase() === name.toLowerCase()))
+        return ($("#homeErr").textContent = "Nama itu sudah dipakai di room ini.");
+      await set(ref(db, `rooms/${c}/players/${pid}`), { name, joinedAt: Date.now(), online: true });
+    } else {
+      await update(ref(db, `rooms/${c}/players/${pid}`), { name, online: true });
+    }
+    enterRoom(c);
+  } catch (e) { $("#homeErr").textContent = "Gagal bergabung: " + e.message; }
+}
+
+/* ---------- render ---------- */
+function render() {
+  const phase = room.phase;
+  if (phase !== lastPhase) {
+    if (phase === "word") { flipped = false; seenCard = false; $("#card").classList.remove("flip"); }
+    if (phase === "discussion") $("#peekText").hidden = true;
+    lastPhase = phase;
+  }
+  const map = { lobby: renderLobby, word: renderWord, discussion: renderDiscussion, voting: renderVoting, result: renderResult };
+  show(phase in map ? phase : "lobby");
+  (map[phase] || renderLobby)();
+  hostEffects();
+}
+
+function renderLobby() {
+  $("#lobbyCode").textContent = code;
+  const list = allPlayers(), L = $("#lobbyList"); L.replaceChildren();
+  const hid = hostId();
+  list.forEach(p => {
+    const li = h("li", online(p) ? "" : "off");
+    const av = h("div", "avatar", (p.name || "?")[0].toUpperCase()); av.style.background = colorOf(p.id);
+    li.append(av, h("div", "grow", p.name));
+    if (p.id === hid) li.append(h("span", "badge", "Host"));
+    if (p.id === pid) li.append(h("span", "badge ok", "Kamu"));
+    if (!online(p)) li.append(h("span", "badge warn", "Terputus"));
+    L.append(li);
+  });
+  const n = list.filter(online).length;
+  $("#lobbyCount").textContent = `${n} online • min. ${MIN_PLAYERS}`;
+  const host = isHost();
+  $("#hostOnly").hidden = !host; $("#waitHost").hidden = host;
+  const sb = $("#startBtn"); sb.disabled = n < MIN_PLAYERS;
+  sb.textContent = n < MIN_PLAYERS ? `Butuh minimal ${MIN_PLAYERS} pemain` : "Mulai Game";
+}
+
+function renderWord() {
+  const me = room.players[pid], act = activePlayers();
+  $("#wordText").textContent = me.word || "—";
+  $("#card").classList.toggle("flip", flipped);
+  const btn = $("#readyWordBtn");
+  if (me.ready) { btn.disabled = true; btn.textContent = "✅ Kamu sudah siap"; }
+  else if (!seenCard) { btn.disabled = true; btn.textContent = "Buka kartu dulu"; }
+  else { btn.disabled = false; btn.textContent = "Saya Sudah Siap"; }
+  const ready = act.filter(p => p.ready).length;
+  $("#wordStatus").textContent = `${ready}/${act.length} pemain siap`;
+}
+
+function renderDiscussion() {
+  const me = room.players[pid], act = activePlayers();
+  const order = (room.order || []).filter(id => room.players[id]);
+  const turn = room.turn || 0, cur = order[turn];
+  const T = $("#turnList"); T.replaceChildren();
+  order.forEach((id, i) => {
+    const p = room.players[id];
+    const li = h("li", i < turn ? "done" : i === turn ? "now" : "");
+    if (!online(p)) li.classList.add("off");
+    li.append(h("div", "avatar", String(i + 1)), h("div", "grow", p.name + (id === pid ? " (kamu)" : "")));
+    if (i === turn) li.append(h("span", "badge", "Giliran"));
+    else if (i < turn) li.append(h("span", "badge ok", "Selesai"));
+    T.append(li);
+  });
+  const nb = $("#nextTurnBtn");
+  if (turn < order.length && (cur === pid || isHost())) {
+    nb.hidden = false;
+    nb.textContent = cur === pid ? "Selesai — giliran berikutnya" : `Lewati giliran ${nameOf(cur)} (host)`;
+  } else nb.hidden = true;
+  const rb = $("#readyDiscBtn");
+  rb.textContent = me.ready ? "✅ Siap (batalkan)" : "Siap Voting";
+  const ready = act.filter(p => p.ready).length;
+  $("#discStatus").textContent = (turn >= order.length ? "Semua sudah dapat giliran. Diskusi bebas! " : "") + `${ready}/${act.length} siap voting`;
+  if (!$("#peekText").hidden) $("#peekText").textContent = "Katamu: " + (me.word || "—");
+}
+
+function renderVoting() {
+  const me = room.players[pid], act = activePlayers();
+  const G = $("#pickGrid"); G.replaceChildren();
+  act.filter(p => p.id !== pid).forEach(p => {
+    const b = h("button", me.vote === p.id ? "sel" : "");
+    const av = h("div", "avatar", p.name[0].toUpperCase()); av.style.background = colorOf(p.id);
+    b.append(av, h("span", "", p.name));
+    b.onclick = () => update(ref(db, `rooms/${code}/players/${pid}`), { vote: p.id });
+    G.append(b);
+  });
+  const voted = act.filter(p => p.vote).length;
+  $("#voteStatus").textContent = `${voted}/${act.length} sudah memilih` + (me.vote ? ` • pilihanmu: ${nameOf(me.vote)}` : "");
+}
+
+function renderResult() {
+  const r = room.result; if (!r) return;
+  const t = $("#resTitle");
+  t.textContent = r.crewWin ? "🎉 Warga Menang!" : "😈 Impostor Menang!";
+  t.className = "result-title " + (r.crewWin ? "win" : "lose");
+  $("#resSub").textContent = `Impostornya adalah ${nameOf(r.impostorId)}.` + (r.tie ? " Suara seri, impostor lolos." : "");
+  $("#resCiv").textContent = r.civilianWord; $("#resImp").textContent = r.impostorWord;
+  const tally = r.tally || {}, max = Math.max(1, ...Object.values(tally));
+  const T = $("#resTally"); T.replaceChildren();
+  Object.entries(tally).sort((a, b) => b[1] - a[1]).forEach(([id, n]) => {
+    const li = h("li"); const box = h("div", "grow");
+    const top = h("div", "", ""); top.style.display = "flex"; top.style.justifyContent = "space-between";
+    top.append(h("span", "", nameOf(id) + (id === r.impostorId ? " 😈" : "")), h("b", "", n + " suara"));
+    const bar = h("div", "bar"), fill = h("i"); bar.append(fill); box.append(top, bar); li.append(box); T.append(li);
+    requestAnimationFrame(() => fill.style.width = (n / max * 100) + "%");
+  });
+  if (!Object.keys(tally).length) T.append(h("li", "", "Tidak ada suara."));
+  const V = $("#resVotes"); V.replaceChildren();
+  Object.entries(r.votes || {}).forEach(([from, to]) => V.append(h("li", "", `${nameOf(from)} → ${nameOf(to)}`)));
+  const host = isHost(); $("#backLobbyBtn").hidden = !host; $("#resWait").hidden = host;
+}
+
+/* ---------- aksi host (otomatis) ---------- */
+function hostEffects() {
+  if (!isHost()) return;
+  const act = activePlayers(), phase = room.phase;
+  if (phase === "word" && act.length && act.every(p => p.ready)) {
+    const u = { phase: "discussion", turn: 0 };
+    allPlayers().forEach(p => { u[`players/${p.id}/ready`] = false; });
+    update(roomRef(), u);
+  } else if (phase === "discussion") {
+    const order = (room.order || []).filter(id => room.players[id]), turn = room.turn || 0;
+    if (act.length && act.every(p => p.ready)) {
+      const u = { phase: "voting" };
+      allPlayers().forEach(p => { u[`players/${p.id}/ready`] = null; u[`players/${p.id}/vote`] = null; });
+      update(roomRef(), u);
+    } else if (turn < order.length && !online(room.players[order[turn]])) {
+      update(roomRef(), { turn: turn + 1 });
+    }
+  } else if (phase === "voting" && act.length && act.every(p => p.vote)) {
+    computeResult();
+  }
+}
+
+function computeResult() {
+  const act = activePlayers(), all = allPlayers().filter(p => p.inGame);
+  const tally = {}, votes = {};
+  act.forEach(p => { if (p.vote) { votes[p.id] = p.vote; tally[p.vote] = (tally[p.vote] || 0) + 1; } });
+  const max = Math.max(0, ...Object.values(tally));
+  const top = Object.keys(tally).filter(id => tally[id] === max);
+  const imp = all.find(p => p.role === "impostor"), civ = all.find(p => p.role === "civilian");
+  update(roomRef(), {
+    phase: "result",
+    result: {
+      impostorId: imp.id, impostorWord: imp.word, civilianWord: civ ? civ.word : "-",
+      crewWin: top.length === 1 && top[0] === imp.id, tie: top.length > 1,
+      tally, votes
+    }
+  });
+}
+
+/* ---------- tombol ---------- */
+$("#createBtn").onclick = createRoom;
+$("#joinBtn").onclick = joinRoom;
+$("#codeIn").addEventListener("keydown", e => { if (e.key === "Enter") joinRoom(); });
+$("#leaveBtn").onclick = leaveRoom;
+$("#copyBtn").onclick = async () => {
+  const link = location.href.split("?")[0] + "?room=" + code;
+  try { await navigator.clipboard.writeText(link); toast("Link disalin!"); } catch { toast("Kode room: " + code); }
+};
+
+$("#startBtn").onclick = () => {
+  const parts = allPlayers().filter(online);
+  if (parts.length < MIN_PLAYERS) return toast(`Minimal ${MIN_PLAYERS} pemain`);
+  let a = $("#cwA").value.trim(), b = $("#cwB").value.trim(), pair;
+  pair = (a && b) ? [a, b] : rand(WORD_PAIRS);
+  if (Math.random() < .5) pair = [pair[1], pair[0]];
+  const impostor = rand(parts);
+  const u = { phase: "word", order: shuffle(parts.map(p => p.id)), turn: 0, result: null };
+  allPlayers().forEach(p => {
+    const base = `players/${p.id}/`;
+    if (online(p)) {
+      u[base + "inGame"] = true; u[base + "role"] = p.id === impostor.id ? "impostor" : "civilian";
+      u[base + "word"] = p.id === impostor.id ? pair[1] : pair[0];
+      u[base + "ready"] = false; u[base + "vote"] = null;
+    } else u[base + "inGame"] = null;
+  });
+  update(roomRef(), u);
+};
+
+$("#cardWrap").onclick = () => {
+  flipped = !flipped; if (flipped) seenCard = true;
+  renderWord();
+};
+$("#readyWordBtn").onclick = () => update(ref(db, `rooms/${code}/players/${pid}`), { ready: true });
+
+$("#nextTurnBtn").onclick = () => update(roomRef(), { turn: (room.turn || 0) + 1 });
+$("#readyDiscBtn").onclick = () => update(ref(db, `rooms/${code}/players/${pid}`), { ready: !room.players[pid].ready });
+$("#peekBtn").onclick = () => {
+  const t = $("#peekText"); t.hidden = !t.hidden;
+  if (!t.hidden) t.textContent = "Katamu: " + (room.players[pid].word || "—");
+  $("#peekBtn").textContent = t.hidden ? "👁️ Lihat kataku" : "🙈 Sembunyikan";
+};
+
+$("#backLobbyBtn").onclick = () => {
+  const u = { phase: "lobby", order: null, turn: null, result: null };
+  allPlayers().forEach(p => {
+    if (!online(p)) u[`players/${p.id}`] = null;
+    else ["word", "role", "vote", "ready", "inGame"].forEach(k => { u[`players/${p.id}/${k}`] = null; });
+  });
+  update(roomRef(), u);
+};
+
+/* ---------- mulai: coba sambung ulang ---------- */
+show("home");
+(async () => {
+  if (!configured) return;
+  const saved = localStorage.getItem("room");
+  if (!saved) return;
+  try {
+    const s = await get(ref(db, `rooms/${saved}/players/${pid}`));
+    if (s.exists()) enterRoom(saved); else localStorage.removeItem("room");
+  } catch { localStorage.removeItem("room"); }
+})();
+</script>
+</body>
+</html>
