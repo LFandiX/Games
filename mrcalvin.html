@@ -4,7 +4,7 @@
 /* =====================================================================
    PENGATURAN GAME — cukup ubah dua baris di bawah ini
    ---------------------------------------------------------------------
-   LIFE   : jumlah nyawa. Ikon korek api dan semua teks "x nyawa" ikut berubah.
+   LIFE   : jumlah nyawa. Ikon karakter dan semua teks "x nyawa" ikut berubah.
    LEVELS : nomor level yang aktif, sesuai urutan main.
             - Hapus nomor untuk mematikan level, contoh: [1, 2, 5, 19]
             - Urutan boleh diacak, contoh: [3, 1, 2]
@@ -51,6 +51,13 @@ const GAME_CONFIG = {
   --heart:#ff5c8d;
   --steel:#cfd5f2;
   --err:#ff6a5c;
+  --jacket:#e0283c;
+  --jacket-2:#a61b2c;
+  --pants:#26262f;
+  --shoe:#0a0a10;
+  --skin:#f1c28e;
+  --hair:#3a281e;
+  --shirt:#f4f5fa;
   --shade:rgba(10,12,28,.9);
   --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
@@ -152,7 +159,7 @@ body.touch .pad{display:flex}
         <div class="card">
           <div class="eyebrow">// ditulis oleh Mr Calvin · untuk yang merasa jenius</div>
           <h2>Bisakah kamu sampai ke <em>hati</em>?</h2>
-          <p>Bawa korek api kecil ini ke hati berbentuk <b>r = a(1 − sin θ)</b>. Kamu punya <span class="cfgLife">3 nyawa</span> untuk <span class="cfgLevels">20 level</span>, dan petanya makin luas di setiap level. Setiap langkah ada jebakan, dan belum ada yang pernah menang.</p>
+          <p>Bawa mahasiswa berjas almamater merah ini ke hati berbentuk <b>r = a(1 − sin θ)</b>. Kamu punya <span class="cfgLife">3 nyawa</span> untuk <span class="cfgLevels">20 level</span>, dan petanya makin luas di setiap level. Setiap langkah ada jebakan, dan belum ada yang pernah menang.</p>
           <div class="challenge" id="challengeBanner" hidden></div>
           <div class="row">
             <button class="primary" id="btnStart">Mulai tantangan</button>
@@ -164,6 +171,185 @@ body.touch .pad{display:flex}
             <span>Di HP pakai tombol di bawah layar</span>
           </div>
           <p class="rotate">Tips: miringkan HP ke mode landscape biar arenanya lebih besar.</p>
+        </div>
+      </div>
+
+      <div class="overlay" id="ovFake" hidden>
+        <div class="card fake">
+          <div class="eyebrow">build sukses · semua level selesai</div>
+          <h2>TAMAT</h2>
+          <p>Kamu menaklukkan semua jebakan Mr Calvin. Selamat!</p>
+          <p id="fake2" class="glitch" hidden>...tunggu.</p>
+          <p id="fake3" hidden>Masih ada satu file yang belum dijalankan: <b>final.exe</b></p>
+          <div class="row"><button class="primary" id="btnNext" hidden>Jalankan final.exe</button></div>
+        </div>
+      </div>
+
+      <div class="overlay" id="ovOver" hidden>
+        <div class="card">
+          <div class="eyebrow" id="overCode">exit code 3 · nyawa = 0</div>
+          <h2 id="overTitle">Kamu tumbang di Level 1</h2>
+          <div class="quote"><b>MR CALVIN</b><span id="overQuote">Sudah kubilang, tidak ada yang bisa menang.</span></div>
+          <div class="stats">
+            <div><span>LEVEL</span><b id="stLevel">1/10</b></div>
+            <div><span>MATI</span><b id="stDeaths">3</b></div>
+            <div><span>WAKTU</span><b id="stTime">0:00</b></div>
+            <div><span>REKORMU</span><b id="stBest">1/10</b></div>
+          </div>
+          <p class="challenge" id="vsResult" hidden></p>
+          <div class="share">
+            <label for="nameInput">Tantang teman: tulis namamu</label>
+            <div class="row">
+              <input type="text" id="nameInput" maxlength="16" placeholder="contoh: Alfandi" autocomplete="off">
+              <button id="btnChallenge">Buat tantangan</button>
+            </div>
+            <div id="shareOut" hidden class="share">
+              <div class="msgbox" id="challengeText"></div>
+              <div class="row">
+                <button class="primary" id="btnCopy">Salin pesan</button>
+                <span class="muted" id="copyNote"></span>
+              </div>
+              <p class="muted">Link halaman ini sudah memuat namamu dan level-mu. Salin link game ini lalu kirim bersama pesan di atas. Temanmu akan melihat tantanganmu saat membukanya.</p>
+            </div>
+          </div>
+          <div class="row"><button id="btnRetry">Coba lagi (<span class="cfgLife">3 nyawa</span> baru)</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status">
+      <span id="statusLeft">UTF-8 · Mr Calvin Lang</span>
+      <span>// TODO: menang (tidak pernah dikerjakan)</span>
+    </div>
+  </div>
+
+  <div class="pad" id="pad">
+    <div class="lr">
+      <button id="padL" aria-label="Kiri">◀</button>
+      <button id="padR" aria-label="Kanan">▶</button>
+    </div>
+    <button class="jump" id="padJ" aria-label="Lompat">LOMPAT</button>
+  </div>
+</div>
+
+<script>
+(() => {
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const W = 960, H = 540;
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+cv.width = W * DPR; cv.height = H * DPR;
+ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+const $ = id => document.getElementById(id);
+
+const css = getComputedStyle(document.documentElement);
+const C = {};
+['ink','panel','panel-2','line','text','muted','flame','heart','steel','err','jacket','jacket-2','pants','shoe','skin','hair','shirt'].forEach(k => C[k.replace('-','')] = css.getPropertyValue('--' + k).trim());
+const MONO = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
+const DISP = '"Chakra Petch", system-ui, sans-serif';
+
+const GRAV = 0.7, SPEED = 4.2, JUMP = -13, MAXF = 16, SPRING = -19;
+/* Ukuran karakter. Gambar asli 22x34, diperbesar 1.3x supaya lebih jelas. */
+const SCALE = 1.3, PW = Math.round(22*SCALE), PH = Math.round(34*SCALE);
+const newPlayer = () => ({x:L.start[0], y:L.start[1] + 34 - PH, w:PW, h:PH, vx:0, vy:0, ground:null, face:1});
+
+/* ---------- level building blocks ---------- */
+const plat = (x,y,w,h,o={}) => { const s = Object.assign({type:'plat',x,y,w,h,vy:0,falling:false,gone:false,timer:0,deadly:false}, o); if (s.move) s.move.dir = 1; return s; };
+const fake = (x,y,w,h) => plat(x,y,w,h,{type:'fake'});
+const hidden = (x,y,w,h) => plat(x,y,w,h,{type:'hidden',revealed:false});
+const block = (x,y,w,h,o={}) => plat(x,y,w,h,Object.assign({type:'block'}, o));
+const spike = (x,y,w,o={}) => Object.assign({x,y,w,h:20,t:o.hidden?0:1,popped:!o.hidden}, o);
+
+/* ---------- kit pembuat level (dipakai level 10–19) ----------
+   Peta disusun dari kiri ke kanan; setiap bagian menambah lebar peta.
+   G(lebar, ...isi)               tanah datar
+   PIT(lebar, ...isi)             jurang berduri yang harus dilompati
+   BRIDGE(lebar, pijakan, ...isi) jurang dengan pijakan [dx, y, lebar, jenis, opsi]
+       jenis: 'n' biasa · 'c' rapuh · 'f' palsu · 'b' berkedip · 's' pegas
+              'mx' lift kiri-kanan · 'my' lift naik-turun · 'h' blok tak terlihat
+   isi (posisi dihitung dari awal bagian):
+       pop(x) duri kejutan · drop(x) blok jatuh · piston(x, lebar, naik, turun, fase)
+       bug(x0, x1, kecepatan) bug berjalan · fly(x, y0, y1, kecepatan) bug terbang
+       rev(x0, x1) kontrol terbalik · wind(x0, x1, gaya) angin · lowgrav(x0, x1) gravitasi rendah
+       liar(x) hati palsu
+   Hati asli otomatis ada di ujung kanan peta. */
+const piece = (x, y, w, kind, o) => {
+  o = typeof o === 'number' ? {stand:o} : (o || {});
+  switch (kind){
+    case 'c':  return plat(x, y, w, 18, {fall:{stand:o.stand || 18}});
+    case 'f':  return fake(x, y, w, 18);
+    case 'b':  return plat(x, y, w, 18, {blink:{on:o.on || 80, off:o.off || 60, phase:o.phase || 0}});
+    case 's':  return plat(x, y, w, 14, {type:'spring', squish:0});
+    case 'mx': return plat(x, y, w, 16, {move:{ax:'x', a:x, b:x + o.r, speed:o.speed || 1.8}});
+    case 'my': return plat(x, y, w, 16, {move:{ax:'y', a:y, b:y + o.r, speed:o.speed || 1.4}});
+    case 'h':  return hidden(x, y, w, 20);
+    default:   return plat(x, y, w, 18);
+  }
+};
+const G = (w, ...ex) => (lv, x) => { lv.solids.push(plat(x, 480, w, 60)); ex.forEach(f => f(lv, x)); return x + w; };
+const PIT = (w, ...ex) => (lv, x) => { lv.spikes.push(spike(x, 540, w)); ex.forEach(f => f(lv, x)); return x + w; };
+const BRIDGE = (w, items, ...ex) => (lv, x) => {
+  lv.spikes.push(spike(x, 540, w));
+  items.forEach(([dx, y, pw, kind, o]) => lv.solids.push(piece(x + dx, y, pw, kind, o)));
+  ex.forEach(f => f(lv, x));
+  return x + w;
+};
+const pop = (o, w = 40) => (lv, x) => lv.spikes.push(spike(x + o, 480, w, {hidden:true, trig:x + o - 35}));
+const drop = (o, w = 60) => (lv, x) => lv.solids.push(block(x + o, -80, w, 60, {fall:{near:x + o - 30}, deadly:true, land:480}));
+const piston = (o, w, on, off, phase = 0) => (lv, x) => lv.spikes.push(spike(x + o, 480, w, {cycle:{on, off, phase}}));
+const bug = (o0, o1, speed = 1.6) => (lv, x) => lv.bugs.push({ax:'x', x:x + o0, y:464, w:26, h:16, a:x + o0, b:x + o1 - 26, speed, dir:1});
+const fly = (o, y0, y1, speed = 2) => (lv, x) => lv.bugs.push({ax:'y', x:x + o, y:y0, w:24, h:18, a:y0, b:y1, speed, dir:1, fly:true});
+const rev = (o0, o1) => (lv, x) => lv.zones.push({type:'reverse', x0:x + o0, x1:x + o1});
+const wind = (o0, o1, force) => (lv, x) => lv.zones.push({type:'wind', x0:x + o0, x1:x + o1, force});
+const lowgrav = (o0, o1) => (lv, x) => lv.zones.push({type:'float', x0:x + o0, x1:x + o1});
+const liar = o => (lv, x) => lv.extraGoals.push({x:x + o, y:440, fake:true});
+function build(meta, parts){
+  const lv = Object.assign({start:[40,446], solids:[], spikes:[], bugs:[], zones:[], extraGoals:[]}, meta);
+  let x = 0;
+  for (const part of parts) x = part(lv, x);
+  lv.width = x;
+  lv.goal = {x:x - 60, y:440};
+  if (meta.hops){ lv.goal.hops = meta.hops.map(([dx, y]) => [x + dx, y]); lv.goal.hopDist = meta.hopDist || 100; }
+  if (meta.chase) lv.chase = Object.assign({x:-160, delay:150}, meta.chase);
+  return lv;
+}
+
+/* ---------- daftar level: urutan = nomor level (1, 2, 3, ...) ---------- */
+const LEVEL_LIBRARY = [
+  () => ({
+    file:'hello_world.py', start:[40,446],
+    msg:'Level satu. Gampang kok, percaya deh sama aku.',
+    solids:[plat(0,480,300,60), plat(300,480,130,60,{fall:{near:285}}), plat(430,480,530,60)],
+    spikes:[spike(300,540,130), spike(600,480,60,{hidden:true,trig:590})],
+    goal:{x:880,y:440,hops:[[100,440]],hopDist:110},
+    zones:[],
+    code:['def hello_world():','    lantai = "aman"  # bohong','    if pemain.dekat(lubang):','        lantai.jatuh()','    duri.muncul(tiba_tiba=True)','    hati.kabur(sekali=True)','    return "gampang kan?"']
+  }),
+  () => ({
+    file:'rumus_hati.cpp', start:[40,446],
+    msg:'Rumus ini kutulis 7 hari. Jangan injak lama-lama ya.',
+    solids:[plat(0,480,220,60), plat(270,410,110,20,{fall:{stand:22}}), plat(440,340,110,20), plat(610,270,120,20), plat(790,220,170,20),
+            block(800,-90,150,60,{fall:{near:736},deadly:true,land:220})],
+    spikes:[spike(220,540,740)],
+    goal:{x:880,y:120},
+    zones:[],
+    code:['#include <cinta.h>','double r(double t){','  return a * (1 - sin(t));','}','// tangga ini rapuh','void langit(){ blok.jatuh(); }','int main(){ while(1) coba(); }']
+  }),
+  () => ({
+    file:'chriss.exe', start:[40,446],
+    msg:'Chriss bilang aku suka curang. Dia benar.',
+    solids:[plat(0,480,380,60), hidden(360,370,110,24), plat(490,480,470,60)],
+    spikes:[spike(380,540,110), spike(780,480,60,{hidden:true,trig:740})],
+    goal:{x:900,y:440},
+    zones:[{type:'reverse',x0:560,x1:760}],
+    code:['MOV  kontrol, -kontrol','JMP  blok_tak_terlihat','; lubang ini pas sekali','; untuk lompatan kamu','CALL duri.kejutan','CMP  nyawa, 0','JE   tertawa']
+  }),
+  () => ({
+    file:'debug_cinta.js', start:[150,446],
+    msg:'Hati yang asli tidak selalu ada di depan mata.',
+    solids:[plat(0,480,400,60), fake(400,480,120,60), plat(520,480,440,60),
+            block(700,-80,80,60,{fall:{near:690},deadly:true,land:480})],
+    spikes:[spike(400,540,120), spik  <p class="rotate">Tips: miringkan HP ke mode landscape biar arenanya lebih besar.</p>
         </div>
       </div>
 
