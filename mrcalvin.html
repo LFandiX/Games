@@ -1,0 +1,843 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Tantangan Mr Calvin</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: an IDE window. File tab bar on top, the game canvas is the editor pane, a status bar under it. Single committed dark look. */
+:root{
+  --ink:#0c0f20;
+  --panel:#151a38;
+  --panel-2:#1d2350;
+  --line:#2c3466;
+  --text:#e8eaf8;
+  --muted:#8c92bd;
+  --flame:#ffad33;
+  --heart:#ff5c8d;
+  --steel:#cfd5f2;
+  --err:#ff6a5c;
+  --shade:rgba(10,12,28,.9);
+  --display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{background:var(--ink);color:var(--text)}
+body{font-family:var(--mono);font-size:14px;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding-block:20px 36px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+header h1{font-family:var(--display);font-weight:700;font-size:clamp(22px,4vw,30px);margin:0;letter-spacing:.01em;text-wrap:balance}
+header h1 span{color:var(--flame)}
+header p{margin:0;color:var(--muted);font-size:12.5px}
+
+.ide{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.tabs{display:flex;align-items:stretch;justify-content:space-between;gap:12px;background:var(--ink);border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+.tab{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--panel);border-right:1px solid var(--line);color:var(--text)}
+.tab i{width:8px;height:8px;border-radius:50%;background:var(--flame);display:inline-block}
+.hud{display:flex;align-items:center;gap:16px;padding:6px 14px;color:var(--muted);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.lives{display:flex;gap:4px}
+.lives svg{width:16px;height:24px;transition:opacity .3s, filter .3s}
+.lives svg.lost{opacity:.18;filter:grayscale(1)}
+.hud b{color:var(--text);font-weight:600}
+
+.stage{position:relative;background:var(--ink)}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;max-width:100%;touch-action:none}
+.status{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 14px;font-size:11.5px;color:var(--muted);background:var(--ink);border-top:1px solid var(--line)}
+
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--shade);padding:20px;overflow:auto}
+.card{max-width:560px;width:100%;display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-size:11.5px;color:var(--muted);letter-spacing:.06em}
+.card h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,5vw,42px);line-height:1.05;margin:0;text-wrap:balance}
+.card h2 em{font-style:normal;color:var(--heart)}
+.card p{margin:0;color:var(--text);max-width:62ch}
+.card .muted{color:var(--muted);font-size:12.5px}
+.quote{border-left:3px solid var(--flame);padding:4px 0 4px 12px;color:var(--text)}
+.quote b{color:var(--flame);font-weight:600;font-size:11.5px;letter-spacing:.08em;display:block}
+.challenge{border:1px solid var(--heart);color:var(--text);padding:10px 12px;border-radius:8px;background:var(--panel)}
+.challenge b{color:var(--heart)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font-family:var(--mono);font-size:14px;font-weight:600;border-radius:8px;padding:11px 18px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--text);transition:transform .25s ease, background .15s}
+button:hover{background:var(--line)}
+button.primary{background:var(--flame);color:var(--ink);border-color:var(--flame)}
+button.primary:hover{filter:brightness(1.08);background:var(--flame)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--heart);outline-offset:2px}
+.keys{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 6px;color:var(--text);background:var(--panel)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.stats div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.stats span{font-size:11px;color:var(--muted);letter-spacing:.05em}
+.stats b{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+label{font-size:12px;color:var(--muted)}
+input[type=text]{font-family:var(--mono);font-size:14px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--ink);color:var(--text);min-width:0;flex:1 1 160px}
+.share{display:flex;flex-direction:column;gap:8px}
+.msgbox{background:var(--ink);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;white-space:pre-wrap;user-select:all;word-break:break-word}
+.fake h2{font-size:clamp(40px,9vw,72px);color:var(--flame)}
+.glitch{color:var(--err)}
+
+.pad{display:none;justify-content:space-between;gap:12px;padding:10px 4px 0;user-select:none;-webkit-user-select:none}
+.pad .lr{display:flex;gap:12px}
+.pad button{width:76px;height:64px;font-size:22px;touch-action:none;border-radius:14px}
+.pad button.jump{width:110px;background:var(--flame);color:var(--ink);border-color:var(--flame);font-size:15px}
+.pad button.on{transform:scale(.94);filter:brightness(1.2)}
+body.touch .pad{display:flex}
+@media (pointer:coarse){.pad{display:flex}}
+.rotate{display:none;font-size:12px;color:var(--muted)}
+
+@media (max-width:700px){
+  .stage.menu canvas{display:none}
+  .overlay{position:relative;inset:auto;min-height:360px;padding-block:24px}
+  .rotate{display:block}
+}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Tantangan <span>Mr Calvin</span></h1>
+    <p>3 nyawa · 10 level · 0 pemenang sejauh ini</p>
+  </header>
+
+  <div class="ide">
+    <div class="tabs">
+      <div class="tab"><i></i><span id="tabName">hello_world.py</span></div>
+      <div class="hud">
+        <div class="lives" id="lives" aria-label="Nyawa"></div>
+        <span>Level <b id="hudLevel">1</b>/10</span>
+        <span>Mati <b id="hudDeaths">0</b></span>
+        <span><b id="hudTime">00:00.0</b></span>
+      </div>
+    </div>
+
+    <div class="stage menu" id="stage">
+      <canvas id="game" width="960" height="540" aria-label="Arena game"></canvas>
+
+      <div class="overlay" id="ovStart">
+        <div class="card">
+          <div class="eyebrow">// ditulis oleh Mr Calvin · untuk yang merasa jenius</div>
+          <h2>Bisakah kamu sampai ke <em>hati</em>?</h2>
+          <p>Bawa korek api kecil ini ke hati berbentuk <b>r = a(1 − sin θ)</b>. Kamu punya 3 nyawa untuk 10 level, dan petanya makin luas di setiap level. Setiap langkah ada jebakan, dan belum ada yang pernah menang.</p>
+          <div class="challenge" id="challengeBanner" hidden></div>
+          <div class="row">
+            <button class="primary" id="btnStart">Mulai tantangan</button>
+            <button id="btnEasy">Mode mudah</button>
+          </div>
+          <div class="keys">
+            <span><kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd> gerak</span>
+            <span><kbd>Spasi</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> lompat</span>
+            <span>Di HP pakai tombol di bawah layar</span>
+          </div>
+          <p class="rotate">Tips: miringkan HP ke mode landscape biar arenanya lebih besar.</p>
+        </div>
+      </div>
+
+      <div class="overlay" id="ovFake" hidden>
+        <div class="card fake">
+          <div class="eyebrow">build sukses · semua level selesai</div>
+          <h2>TAMAT</h2>
+          <p>Kamu menaklukkan semua jebakan Mr Calvin. Selamat!</p>
+          <p id="fake2" class="glitch" hidden>...tunggu.</p>
+          <p id="fake3" hidden>Masih ada satu file yang belum dijalankan: <b>final.exe</b></p>
+          <div class="row"><button class="primary" id="btnNext" hidden>Jalankan final.exe</button></div>
+        </div>
+      </div>
+
+      <div class="overlay" id="ovOver" hidden>
+        <div class="card">
+          <div class="eyebrow" id="overCode">exit code 3 · nyawa = 0</div>
+          <h2 id="overTitle">Kamu tumbang di Level 1</h2>
+          <div class="quote"><b>MR CALVIN</b><span id="overQuote">Sudah kubilang, tidak ada yang bisa menang.</span></div>
+          <div class="stats">
+            <div><span>LEVEL</span><b id="stLevel">1/10</b></div>
+            <div><span>MATI</span><b id="stDeaths">3</b></div>
+            <div><span>WAKTU</span><b id="stTime">0:00</b></div>
+            <div><span>REKORMU</span><b id="stBest">1/10</b></div>
+          </div>
+          <p class="challenge" id="vsResult" hidden></p>
+          <div class="share">
+            <label for="nameInput">Tantang teman: tulis namamu</label>
+            <div class="row">
+              <input type="text" id="nameInput" maxlength="16" placeholder="contoh: Alfandi" autocomplete="off">
+              <button id="btnChallenge">Buat tantangan</button>
+            </div>
+            <div id="shareOut" hidden class="share">
+              <div class="msgbox" id="challengeText"></div>
+              <div class="row">
+                <button class="primary" id="btnCopy">Salin pesan</button>
+                <span class="muted" id="copyNote"></span>
+              </div>
+              <p class="muted">Link halaman ini sudah memuat namamu dan level-mu. Salin link game ini lalu kirim bersama pesan di atas. Temanmu akan melihat tantanganmu saat membukanya.</p>
+            </div>
+          </div>
+          <div class="row"><button id="btnRetry">Coba lagi (3 nyawa baru)</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status">
+      <span id="statusLeft">UTF-8 · Mr Calvin Lang</span>
+      <span>// TODO: menang (tidak pernah dikerjakan)</span>
+    </div>
+  </div>
+
+  <div class="pad" id="pad">
+    <div class="lr">
+      <button id="padL" aria-label="Kiri">◀</button>
+      <button id="padR" aria-label="Kanan">▶</button>
+    </div>
+    <button class="jump" id="padJ" aria-label="Lompat">LOMPAT</button>
+  </div>
+</div>
+
+<script>
+(() => {
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const W = 960, H = 540;
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+cv.width = W * DPR; cv.height = H * DPR;
+ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+const $ = id => document.getElementById(id);
+
+const css = getComputedStyle(document.documentElement);
+const C = {};
+['ink','panel','panel-2','line','text','muted','flame','heart','steel','err'].forEach(k => C[k.replace('-','')] = css.getPropertyValue('--' + k).trim());
+const MONO = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
+const DISP = '"Chakra Petch", system-ui, sans-serif';
+
+const GRAV = 0.7, SPEED = 4.2, JUMP = -13, MAXF = 16;
+
+/* ---------- level building blocks ---------- */
+const plat = (x,y,w,h,o={}) => { const s = Object.assign({type:'plat',x,y,w,h,vy:0,falling:false,gone:false,timer:0,deadly:false}, o); if (s.move) s.move.dir = 1; return s; };
+const fake = (x,y,w,h) => plat(x,y,w,h,{type:'fake'});
+const hidden = (x,y,w,h) => plat(x,y,w,h,{type:'hidden',revealed:false});
+const block = (x,y,w,h,o={}) => plat(x,y,w,h,Object.assign({type:'block'}, o));
+const spike = (x,y,w,o={}) => Object.assign({x,y,w,h:20,t:o.hidden?0:1,popped:!o.hidden}, o);
+
+const LEVELS = [
+  () => ({
+    file:'hello_world.py', start:[40,446],
+    msg:'Level satu. Gampang kok, percaya deh sama aku.',
+    solids:[plat(0,480,300,60), plat(300,480,130,60,{fall:{near:285}}), plat(430,480,530,60)],
+    spikes:[spike(300,540,130), spike(600,480,60,{hidden:true,trig:590})],
+    goal:{x:880,y:440,hops:[[100,440]],hopDist:110},
+    zones:[],
+    code:['def hello_world():','    lantai = "aman"  # bohong','    if pemain.dekat(lubang):','        lantai.jatuh()','    duri.muncul(tiba_tiba=True)','    hati.kabur(sekali=True)','    return "gampang kan?"']
+  }),
+  () => ({
+    file:'rumus_hati.cpp', start:[40,446],
+    msg:'Rumus ini kutulis 7 hari. Jangan injak lama-lama ya.',
+    solids:[plat(0,480,220,60), plat(270,410,110,20,{fall:{stand:22}}), plat(440,340,110,20), plat(610,270,120,20), plat(790,220,170,20),
+            block(800,-90,150,60,{fall:{near:736},deadly:true,land:220})],
+    spikes:[spike(220,540,740)],
+    goal:{x:880,y:120},
+    zones:[],
+    code:['#include <cinta.h>','double r(double t){','  return a * (1 - sin(t));','}','// tangga ini rapuh','void langit(){ blok.jatuh(); }','int main(){ while(1) coba(); }']
+  }),
+  () => ({
+    file:'chriss.exe', start:[40,446],
+    msg:'Chriss bilang aku suka curang. Dia benar.',
+    solids:[plat(0,480,380,60), hidden(360,370,110,24), plat(490,480,470,60)],
+    spikes:[spike(380,540,110), spike(780,480,60,{hidden:true,trig:740})],
+    goal:{x:900,y:440},
+    zones:[{type:'reverse',x0:560,x1:760}],
+    code:['MOV  kontrol, -kontrol','JMP  blok_tak_terlihat','; lubang ini pas sekali','; untuk lompatan kamu','CALL duri.kejutan','CMP  nyawa, 0','JE   tertawa']
+  }),
+  () => ({
+    file:'debug_cinta.js', start:[150,446],
+    msg:'Hati yang asli tidak selalu ada di depan mata.',
+    solids:[plat(0,480,400,60), fake(400,480,120,60), plat(520,480,440,60),
+            block(700,-80,80,60,{fall:{near:690},deadly:true,land:480})],
+    spikes:[spike(400,540,120), spike(640,480,40,{hidden:true,trig:600}), spike(70,480,40,{hidden:true,trigL:128})],
+    goal:{x:880,y:440,fake:true},
+    goal2:{x:30,y:440,hidden:true,revealL:80},
+    zones:[],
+    code:['const hati = palsu();','lantai[3].solid = false;','// yang asli? coba pikir','if (pemain.arah === "kiri") {','  hatiAsli.tampil();','}','debugger; // kamu']
+  }),
+  /* ---- level 5: peta 1600 px, lantai berjalan ---- */
+  () => ({
+    file:'array_hati.java', start:[40,446], width:1600,
+    msg:'Petanya kuperbesar. Jebakannya juga.',
+    solids:[plat(0,480,360,60), plat(480,480,220,60),
+            plat(720,480,100,16,{move:{ax:'x',a:720,b:950,speed:1.6}}),
+            plat(1050,480,550,60),
+            block(1400,-80,60,60,{fall:{near:1370},deadly:true,land:480})],
+    spikes:[spike(360,540,120), spike(700,540,350), spike(1250,480,40,{hidden:true,trig:1225})],
+    goal:{x:1540,y:440},
+    zones:[{type:'reverse',x0:500,x1:680}],
+    code:['public class ArrayHati {','  int[] lantai = new int[3];','  // indeks ke-3? out of bounds','  void geser(){ lantai.jalan(); }','  boolean menang(){','    return false;','  }','}']
+  }),
+  /* ---- level 6: 2000 px, tangga rapuh ---- */
+  () => ({
+    file:'binary_search.go', start:[40,446], width:2000,
+    msg:'Cari jalannya seperti binary search. Setengahnya bohong.',
+    solids:[plat(0,480,260,60),
+            plat(320,420,90,18,{fall:{stand:24}}), plat(470,360,90,18), plat(630,300,90,18,{fall:{stand:20}}),
+            fake(790,360,90,18), plat(850,250,100,18), plat(1010,320,100,18), plat(1180,390,100,18),
+            block(1180,-80,100,60,{fall:{near:1160},deadly:true}),
+            plat(1340,480,260,60),
+            block(1530,-80,60,60,{fall:{near:1500},deadly:true,land:480}),
+            plat(1660,420,90,18,{fall:{stand:18}}), plat(1820,480,180,60)],
+    spikes:[spike(260,540,1080), spike(1600,540,220), spike(1450,480,40,{hidden:true,trig:1420})],
+    goal:{x:1950,y:440,hops:[[1870,340]],hopDist:90},
+    zones:[],
+    code:['func cari(hati []int) int {','  kiri, kanan := 0, len(hati)','  for kiri < kanan {','    tengah := palsu()','    lantai.runtuh(tengah)','  }','  return -1 // selalu','}']
+  }),
+  /* ---- level 7: 2400 px, gelap total ---- */
+  () => ({
+    file:'dark_mode.css', start:[40,446], width:2400, dark:true,
+    msg:'Lampunya kumatikan. Kamu kan korek api, terangi sendiri.',
+    solids:[plat(0,480,300,60), plat(420,480,280,60), plat(830,480,270,60),
+            plat(1160,430,80,18), plat(1300,380,80,18,{fall:{stand:18}}), plat(1440,430,80,18),
+            plat(1520,480,380,60), plat(2000,480,400,60),
+            block(2160,-80,60,60,{fall:{near:2130},deadly:true,land:480})],
+    spikes:[spike(300,540,120), spike(700,540,130), spike(1100,540,420), spike(1900,540,100),
+            spike(1620,480,40,{hidden:true,trig:1590})],
+    goal:{x:2340,y:440},
+    zones:[{type:'reverse',x0:1700,x1:1850}],
+    code:['body {','  background: #000;','  cursor: none;','}','.lantai { opacity: 0; }','.duri { display: block; }','.hati { visibility: ?; }']
+  }),
+  /* ---- level 8: 2800 px, kejar-kejaran dengan deadline ---- */
+  () => ({
+    file:'deadline_v2.rs', start:[40,446], width:2800,
+    msg:'Deadline turun lagi. Kali ini petanya tiga kali lebih panjang.',
+    solids:[plat(0,480,400,60), plat(530,480,370,60),
+            plat(920,480,100,16,{move:{ax:'x',a:920,b:1110,speed:1.8}}),
+            plat(1300,480,300,60),
+            block(1450,-80,60,60,{fall:{near:1420},deadly:true,land:480}),
+            plat(1660,430,90,18,{fall:{stand:16}}), plat(1810,430,90,18,{fall:{stand:16}}),
+            plat(1960,480,340,60), plat(2420,480,380,60)],
+    spikes:[spike(400,540,130), spike(900,540,400), spike(1600,540,360), spike(2300,540,120),
+            spike(700,480,40,{hidden:true,trig:665}), spike(2200,480,40,{hidden:true,trig:2170})],
+    goal:{x:2740,y:440},
+    extraGoals:[{x:2560,y:440,fake:true}],
+    zones:[],
+    ceil:{y:-30,speed:0.35,delay:90},
+    code:['fn main() {','  let deadline = turun();','  loop {','    pemain.lari();','    if !cepat { panic!(); }','  }','}']
+  }),
+  /* ---- level 9: 3200 px, semua jebakan sekaligus ---- */
+  () => ({
+    file:'segfault.c', start:[40,446], width:3200,
+    msg:'Level terakhir sebelum tamat. Semua jebakanku ada di sini.',
+    solids:[plat(0,480,420,60), hidden(400,400,110,20), plat(650,480,350,60),
+            plat(1020,480,90,16,{move:{ax:'x',a:1020,b:1160,speed:2}}),
+            plat(1350,480,400,60),
+            block(1430,-80,50,60,{fall:{near:1310},deadly:true,land:480}),
+            block(1550,-80,50,60,{fall:{near:1430},deadly:true,land:480}),
+            block(1670,-80,50,60,{fall:{near:1550},deadly:true,land:480}),
+            plat(1810,420,80,18,{fall:{stand:14}}), plat(1950,360,80,18,{fall:{stand:14}}), plat(2090,420,80,18,{fall:{stand:14}}),
+            plat(2200,480,300,60), plat(2640,480,560,60),
+            block(2850,-80,60,60,{fall:{near:2730},deadly:true,land:480})],
+    spikes:[spike(420,540,230), spike(1000,540,350), spike(1750,540,450), spike(2500,540,140),
+            spike(840,480,40,{hidden:true,trig:800}), spike(2350,480,40,{hidden:true,trig:2320})],
+    goal:{x:3120,y:440,hops:[[2990,335]],hopDist:100},
+    extraGoals:[{x:2450,y:440,fake:true}],
+    zones:[{type:'reverse',x0:700,x1:900}],
+    code:['int main(void) {','  int *hati = NULL;','  *hati = 1; // segfault','  free(lantai);','  free(lantai); // lagi','  return nyawa--;','}']
+  }),
+  () => {
+    const s = [];
+    for (let i = 0; i < 18; i++) s.push(plat(i*80,480,80,60,{fall:{stand:i===0?50:14}}));
+    s.push(plat(190,360,100,16,{fall:{stand:18}}), fake(500,330,100,16), plat(770,300,110,16,{fall:{stand:18}}), plat(1080,340,110,16,{fall:{stand:18}}));
+    return {
+      file:'final.exe', start:[30,446], width:1440,
+      msg:'while (true) { hati.kabur(); }  Selamat mencoba.',
+      solids:s,
+      spikes:[spike(0,540,1440)],
+      goal:{x:1340,y:440,tele:true,fake:true},
+      zones:[],
+      ceil:{y:-30,speed:0.5,delay:60},
+      code:['while (true) {','  hati.kabur();','  lantai.runtuh();','  deadline.turun();','}','// baris ini tidak','// pernah tercapai']
+    };
+  }
+];
+
+/* ---------- state ---------- */
+let L = null, p = null, cur = 0, lives = 3, deaths = 0, elapsed = 0, reached = 1;
+let state = 'menu', stT = 0, tick = 0, coyote = 0, jumpBuf = 0, reversed = false, teleCount = 0;
+let msgText = '', msgT = 0, deathReason = '';
+const parts = [];
+const keys = {left:false,right:false,jump:false};
+
+const TAUNTS = {
+  any:['Sudah kuduga.','Itu baru pemanasan.','Chriss saja butuh waktu lama memahamiku.','Error-nya di kamu, bukan di kodeku.','Coba lagi. Atau jangan.','Lumayan. Untuk pemula.','Kodeku tidak punya bug. Itu fitur.'],
+  fall:['Gravitasi juga bagian dari kodeku.','Lubang itu kugali khusus untukmu.'],
+  crush:['Kenapa tidak lihat ke atas?','Blok itu jatuh tepat waktu. Seperti rencanaku.'],
+  fake:['Hati palsu. Klasik.','Tidak semua yang bersinar itu asli.'],
+  deadline:['Langit-langit itu namanya deadline.','Deadline tidak pernah menunggu.'],
+  spike:['Duri itu tadi tidak ada, kan?','Kejutan!']
+};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+function setMsg(t, f){ msgText = t; msgT = f; }
+const N = LEVELS.length;
+let cam = 0;
+function prepLevel(l){
+  l.width = l.width || W;
+  l.goals = [l.goal, l.goal2, ...(l.extraGoals || [])].filter(Boolean);
+  l.goals.forEach(g => { g.tx = g.x; g.ty = g.y; });
+  return l;
+}
+function camTarget(){ return Math.max(0, Math.min(L.width - W, p.x + p.w/2 - W/2)); }
+
+function loadLevel(i){
+  cur = i;
+  L = prepLevel(LEVELS[i]());
+  p = {x:L.start[0], y:L.start[1], w:22, h:34, vx:0, vy:0, ground:null};
+  cam = camTarget();
+  coyote = 0; jumpBuf = 0; teleCount = 0; reversed = false;
+  reached = Math.max(reached, i+1);
+  state = 'play';
+  setMsg(L.msg, 210);
+  updateHUD();
+}
+
+/* ---------- physics ---------- */
+const hit = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+const solid = s => !s.gone && s.type !== 'fake' && (s.type !== 'hidden' || s.revealed);
+
+function step(){
+  tick++;
+  if (msgT > 0) msgT--;
+  for (let i = parts.length-1; i >= 0; i--){ const q = parts[i]; q.x += q.vx; q.y += q.vy; q.vy += 0.25; if (--q.life <= 0) parts.splice(i,1); }
+  if (state === 'dead'){ if (--stT <= 0) afterDeath(); return; }
+  if (state === 'win'){ if (--stT <= 0) afterWin(); return; }
+  if (state !== 'play') return;
+
+  let cx = p.x + p.w/2;
+
+  for (const s of L.solids){
+    if (s.gone) continue;
+    if (s.move){
+      const m = s.move, prev = s[m.ax];
+      s[m.ax] += m.dir * m.speed;
+      if (s[m.ax] >= m.b){ s[m.ax] = m.b; m.dir = -1; } else if (s[m.ax] <= m.a){ s[m.ax] = m.a; m.dir = 1; }
+      if (p.ground === s){ if (m.ax === 'x') p.x += s[m.ax] - prev; else p.y += s[m.ax] - prev; }
+    }
+    if (s.fall && !s.falling){
+      const f = s.fall;
+      if ((f.near != null && cx > f.near) || (f.left != null && cx < f.left)) s.falling = true;
+      if (f.stand != null && p.ground === s && ++s.timer > f.stand) s.falling = true;
+    }
+    if (s.falling){
+      s.vy = Math.min(s.vy + 0.6, 18); s.y += s.vy;
+      if (s.land != null && s.y + s.h >= s.land){ s.y = s.land - s.h; s.falling = false; s.deadly = false; s.fall = null; }
+      if (s.y > H + 100) s.gone = true;
+      if (s.deadly && hit(p, s)) return die('crush');
+    }
+  }
+
+  let dir = (keys.right?1:0) - (keys.left?1:0);
+  reversed = L.zones.some(z => z.type === 'reverse' && cx >= z.x0 && cx <= z.x1);
+  if (reversed) dir = -dir;
+  p.vx = dir * SPEED;
+  if (p.ground) coyote = 6; else if (coyote > 0) coyote--;
+  if (jumpBuf > 0) jumpBuf--;
+  if (jumpBuf > 0 && coyote > 0){ p.vy = JUMP; coyote = 0; jumpBuf = 0; p.ground = null; }
+  if (!keys.jump && p.vy < -5) p.vy = -5;
+  p.vy = Math.min(p.vy + GRAV, MAXF);
+
+  p.x += p.vx;
+  p.x = Math.max(0, Math.min(L.width - p.w, p.x));
+  for (const s of L.solids){
+    if (!solid(s) || !hit(p,s)) continue;
+    if (p.vx > 0) p.x = s.x - p.w; else if (p.vx < 0) p.x = s.x + s.w;
+  }
+
+  p.y += p.vy; p.ground = null;
+  for (const s of L.solids){
+    if (s.gone) continue;
+    if (s.type === 'hidden' && !s.revealed){
+      if (p.vy < 0 && hit(p,s)){ s.revealed = true; p.y = s.y + s.h; p.vy = 0; burst(p.x+11, p.y, C.heart, 10); setMsg('Blok tak terlihat. Aku memang jenius.', 120); }
+      continue;
+    }
+    if (!solid(s) || !hit(p,s)) continue;
+    if (p.vy >= 0){ p.y = s.y - p.h; p.vy = 0; p.ground = s; }
+    else { p.y = s.y + s.h; p.vy = 0; }
+  }
+
+  cx = p.x + p.w/2;
+  const cy = p.y + p.h/2;
+
+  for (const k of L.spikes){
+    if (!k.popped && ((k.trig != null && cx > k.trig) || (k.trigL != null && cx < k.trigL))) k.popped = true;
+    if (k.popped && k.t < 1) k.t = Math.min(1, k.t + 0.25);
+    if (k.t > 0.5){
+      const top = k.y - k.h*k.t + 6;
+      if (p.x+p.w > k.x+4 && p.x < k.x+k.w-4 && p.y+p.h > top && p.y < k.y) return die(k.y >= H ? 'fall' : 'spike');
+    }
+  }
+
+  for (const g of L.goals){
+    if (g.hidden){
+      if (g.revealL != null && cx < g.revealL){ g.hidden = false; burst(g.x, g.y, C.heart, 18); setMsg('...kamu menemukannya? Hmph.', 120); }
+      continue;
+    }
+    g.x += (g.tx - g.x) * 0.22; g.y += (g.ty - g.y) * 0.22;
+    const d = Math.hypot(cx - g.tx, cy - g.ty);
+    if (g.hops && g.hops.length && d < g.hopDist){
+      const n = g.hops.shift(); g.tx = n[0]; g.ty = n[1]; setMsg('Eits. Hatinya pindah.', 120);
+    } else if (g.tele && d < 130){
+      burst(g.x, g.y, C.heart, 12);
+      let nx, tries = 0;
+      do { nx = 60 + Math.random()*(L.width - 120); tries++; } while (Math.abs(nx - cx) < 340 && tries < 40);
+      g.tx = g.x = nx; g.ty = g.y = 200 + Math.random()*230;
+      teleCount++;
+      if (teleCount === 1) setMsg('Kamu pikir bisa menangkapnya?', 110);
+      if (teleCount === 4) setMsg('Hati itu bukan untukmu.', 110);
+    } else if (Math.abs(cx - g.x) < 24 && Math.abs(cy - g.y) < 32){
+      if (g.fake) return die('fake');
+      return win();
+    }
+  }
+
+  if (L.ceil){
+    const c = L.ceil;
+    if (c.delay > 0) c.delay--; else c.y += c.speed;
+    if (p.y < c.y + 14) return die('deadline');
+  }
+  if (p.y > H + 30) return die('fall');
+  cam += (camTarget() - cam) * 0.15;
+}
+
+function die(r){
+  state = 'dead'; stT = 85; lives--; deaths++; deathReason = r;
+  burst(p.x+11, p.y+17, C.flame, 26); burst(p.x+11, p.y+17, C.err, 14);
+  setMsg(Math.random() < 0.55 ? pick(TAUNTS[r] || TAUNTS.any) : pick(TAUNTS.any), 85);
+  updateHUD();
+}
+function afterDeath(){ if (lives <= 0) gameOver(); else loadLevel(cur); }
+function win(){ state = 'win'; stT = 60; burst(p.x+11, p.y+10, C.heart, 30); setMsg('...beruntung.', 60); }
+function afterWin(){
+  if (cur === N - 2){ showFakeEnd(); return; }
+  loadLevel(cur + 1);
+}
+function burst(x,y,color,n){
+  for (let i = 0; i < n; i++){ const a = Math.random()*Math.PI*2, v = 1 + Math.random()*4; parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-2,life:30+Math.random()*25,color}); }
+}
+
+/* ---------- drawing ---------- */
+function hash(n){ const x = Math.sin(n*127.1)*43758.5453; return x - Math.floor(x); }
+
+function drawBackground(){
+  ctx.fillStyle = C.ink; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = C.panel; ctx.fillRect(0,0,34,H);
+  ctx.font = '12px ' + MONO; ctx.textBaseline = 'middle';
+  const lines = L ? L.code : [];
+  for (let i = 0; i < 24; i++){
+    const y = 22 + i*22;
+    ctx.globalAlpha = 0.45; ctx.fillStyle = C.muted; ctx.textAlign = 'right';
+    ctx.fillText(String(i+1), 26, y);
+    if (lines.length){ ctx.globalAlpha = 0.13; ctx.fillStyle = C.steel; ctx.textAlign = 'left'; ctx.fillText(lines[i % lines.length], 48, y); }
+  }
+  ctx.globalAlpha = 1; ctx.textAlign = 'left';
+}
+
+function drawSolid(s){
+  if (s.gone || (s.type === 'hidden' && !s.revealed)) return;
+  let x = s.x, y = s.y;
+  if (s.fall && s.fall.stand != null && s.timer > 0 && !s.falling) x += (Math.random()-0.5)*3;
+  ctx.fillStyle = s.type === 'block' ? C.panel2 : C.panel;
+  ctx.fillRect(x, y, s.w, s.h);
+  ctx.fillStyle = s.type === 'hidden' ? C.heart : C.line;
+  ctx.fillRect(x, y, s.w, 3);
+  if (s.type === 'hidden'){
+    ctx.strokeStyle = C.heart; ctx.setLineDash([4,4]); ctx.strokeRect(x+.5, y+.5, s.w-1, s.h-1); ctx.setLineDash([]);
+    ctx.fillStyle = C.heart; ctx.font = '600 13px ' + MONO; ctx.textAlign = 'center'; ctx.fillText('?', x+s.w/2, y+s.h/2+1); ctx.textAlign = 'left';
+    return;
+  }
+  if (s.type === 'block'){
+    ctx.fillStyle = C.muted; ctx.font = '11px ' + MONO; ctx.fillText(s.w >= 90 ? '// TODO: jatuh' : '//!', x+8, y+s.h/2+2);
+    return;
+  }
+  if (s.move){
+    ctx.fillStyle = C.flame; ctx.fillRect(x, y, s.w, 3);
+    ctx.font = '600 11px ' + MONO; ctx.textAlign = 'center'; ctx.fillText('<=>', x + s.w/2, y + s.h/2 + 3); ctx.textAlign = 'left';
+    return;
+  }
+  const rows = s.h >= 40 ? 2 : (s.h >= 20 ? 1 : 0);
+  const cols = [C.flame, C.heart, C.steel, C.muted];
+  for (let r = 0; r < rows; r++){
+    let bx = x + 8 + (r ? 18 : 0);
+    let n = Math.round(s.x) + r*31;
+    while (bx < x + s.w - 14){
+      const w = 10 + hash(n++)*34;
+      if (bx + w > x + s.w - 8) break;
+      ctx.globalAlpha = 0.28; ctx.fillStyle = cols[Math.floor(hash(n++)*4)];
+      ctx.fillRect(bx, y + 14 + r*18, w, 4);
+      bx += w + 8;
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawSpikes(k){
+  if (k.t <= 0) return;
+  const n = Math.max(1, Math.round(k.w / 20)), sw = k.w / n, top = k.y - k.h * k.t;
+  ctx.fillStyle = C.steel; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+  for (let i = 0; i < n; i++){
+    ctx.beginPath(); ctx.moveTo(k.x + i*sw, k.y); ctx.lineTo(k.x + i*sw + sw/2, top); ctx.lineTo(k.x + (i+1)*sw, k.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+}
+
+function heartPath(cx, cy, s){
+  ctx.beginPath();
+  for (let i = 0; i <= 72; i++){
+    const th = i/72*Math.PI*2, r = s*(1 - Math.sin(th));
+    const x = cx + r*Math.cos(th), y = cy - r*Math.sin(th) - s*0.875;
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  }
+  ctx.closePath();
+}
+function drawGoal(g){
+  if (!g || g.hidden) return;
+  const bob = Math.sin(tick*0.08)*3;
+  ctx.save();
+  ctx.shadowColor = C.heart; ctx.shadowBlur = 18;
+  heartPath(g.x, g.y + bob, 11);
+  ctx.fillStyle = C.heart; ctx.fill();
+  ctx.restore();
+  ctx.font = '10.5px ' + MONO; ctx.fillStyle = C.muted; ctx.textAlign = 'center';
+  ctx.fillText('r = a(1 − sin θ)', g.x, g.y + bob + 32);
+  ctx.textAlign = 'left';
+}
+
+function drawPlayer(){
+  const x = Math.round(p.x), y = Math.round(p.y);
+  const fh = 9 + Math.sin(tick*0.5)*1.6 + Math.random()*1.2;
+  ctx.fillStyle = C.flame;
+  ctx.beginPath(); ctx.ellipse(x+7, y-fh/2+1, 4.5, fh/2+1, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ffe9a8';
+  ctx.beginPath(); ctx.ellipse(x+7, y-fh/2+3, 2, fh/3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C.steel; roundRect(x+1, y+1, 20, 10, 2); ctx.fill();
+  ctx.fillStyle = C.muted; ctx.beginPath(); ctx.arc(x+16, y+6, 3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C.err; roundRect(x, y+10, 22, 24, 4); ctx.fill();
+  ctx.fillStyle = C.ink; ctx.globalAlpha = .25; ctx.fillRect(x+4, y+14, 3, 16); ctx.globalAlpha = 1;
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+function drawCeil(c){
+  if (c.y <= -30) return;
+  ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, W, Math.max(0, c.y));
+  ctx.fillStyle = C.err; ctx.fillRect(0, c.y-2, W, 2);
+  ctx.fillStyle = C.steel; ctx.strokeStyle = C.ink;
+  for (let x = 0; x < W; x += 20){ ctx.beginPath(); ctx.moveTo(x, c.y); ctx.lineTo(x+10, c.y+16); ctx.lineTo(x+20, c.y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  if (c.y > 26){ ctx.fillStyle = C.err; ctx.font = '700 15px ' + DISP; ctx.textAlign = 'center'; ctx.fillText('DEADLINE', W/2, c.y - 10); ctx.textAlign = 'left'; }
+}
+
+function wrap(text, maxW){
+  const words = text.split(' '), out = []; let line = '';
+  for (const w of words){ const t = line ? line + ' ' + w : w; if (ctx.measureText(t).width > maxW && line){ out.push(line); line = w; } else line = t; }
+  if (line) out.push(line);
+  return out;
+}
+function drawMsg(){
+  ctx.font = '15px ' + MONO;
+  const lines = wrap(msgText, 560);
+  const w = Math.min(620, Math.max(...lines.map(l => ctx.measureText(l).width)) + 32);
+  const h = 38 + lines.length*21;
+  const x = 50, y = 16;
+  ctx.globalAlpha = Math.min(1, msgT/15);
+  ctx.fillStyle = C.panel; roundRect(x, y, w, h, 8); ctx.fill();
+  ctx.strokeStyle = C.flame; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = C.flame; ctx.font = '600 11px ' + MONO; ctx.fillText('MR CALVIN', x+16, y+18);
+  ctx.fillStyle = C.text; ctx.font = '15px ' + MONO;
+  lines.forEach((l,i) => ctx.fillText(l, x+16, y+40+i*21));
+  ctx.globalAlpha = 1;
+}
+
+function draw(){
+  drawBackground();
+  if (!L) return;
+  const ox = Math.round(cam);
+  ctx.save(); ctx.translate(-ox, 0);
+  for (const s of L.solids) if (s.x + s.w > ox - 20 && s.x < ox + W + 20) drawSolid(s);
+  for (const k of L.spikes) if (k.x + k.w > ox && k.x < ox + W) drawSpikes(k);
+  if (state !== 'dead') drawPlayer();
+  for (const q of parts){ ctx.globalAlpha = Math.min(1, q.life/20); ctx.fillStyle = q.color; ctx.fillRect(q.x-2, q.y-2, 4, 4); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  if (L.dark){
+    const sx = p.x + p.w/2 - ox, sy = p.y + 8;
+    const g = ctx.createRadialGradient(sx, sy, 50, sx, sy, 200);
+    g.addColorStop(0, 'rgba(12,15,32,0)'); g.addColorStop(1, C.ink);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.save(); ctx.translate(-ox, 0);
+  L.goals.forEach(drawGoal);
+  if (reversed && state === 'play'){
+    ctx.font = '600 12px ' + MONO; ctx.fillStyle = C.err; ctx.textAlign = 'center';
+    ctx.fillText('kontrol.balik()', p.x + 11, p.y - 22); ctx.textAlign = 'left';
+  }
+  ctx.restore();
+  if (L.ceil) drawCeil(L.ceil);
+  if (L.width > W){
+    const bx = 60, bw = W - 120, by = H - 10;
+    ctx.fillStyle = C.line; ctx.fillRect(bx, by, bw, 3);
+    ctx.fillStyle = C.heart; ctx.fillRect(bx + bw - 3, by - 3, 3, 9);
+    ctx.fillStyle = C.flame; ctx.beginPath(); ctx.arc(bx + bw * Math.min(1, (p.x + p.w/2) / L.width), by + 1.5, 5, 0, Math.PI*2); ctx.fill();
+  }
+  if (state === 'dead'){
+    ctx.fillStyle = C.err; ctx.globalAlpha = 0.1; ctx.fillRect(0,0,W,H); ctx.globalAlpha = 1;
+    ctx.textAlign = 'center';
+    ctx.font = '700 34px ' + DISP; ctx.fillStyle = C.err; ctx.fillText('RuntimeError: nyawa -= 1', W/2, H/2 - 8);
+    ctx.font = '14px ' + MONO; ctx.fillStyle = C.muted; ctx.fillText(lives > 0 ? `sisa nyawa: ${lives}` : 'sisa nyawa: 0 · menghentikan program...', W/2, H/2 + 24);
+    ctx.textAlign = 'left';
+  }
+  if (state === 'win'){
+    ctx.textAlign = 'center'; ctx.font = '700 34px ' + DISP; ctx.fillStyle = C.flame;
+    ctx.fillText('build sukses', W/2, H/2); ctx.textAlign = 'left';
+  }
+  if (msgT > 0 && msgText) drawMsg();
+}
+
+/* ---------- HUD ---------- */
+const LIGHTER = '<svg viewBox="0 0 16 24" aria-hidden="true"><ellipse cx="5.5" cy="4.5" rx="3" ry="4.5" fill="var(--flame)"/><rect x="1" y="8" width="14" height="5" rx="1" fill="var(--steel)"/><rect x="0.5" y="12" width="15" height="12" rx="2.5" fill="var(--err)"/></svg>';
+function updateHUD(){
+  $('lives').innerHTML = [0,1,2].map(i => LIGHTER.replace('<svg', `<svg class="${i < lives ? '' : 'lost'}"`)).join('');
+  $('hudDeaths').textContent = deaths;
+  $('hudLevel').textContent = cur + 1;
+  $('tabName').textContent = L ? L.file : 'hello_world.py';
+  $('statusLeft').textContent = `UTF-8 · ${L ? L.file : ''} · nyawa ${lives}/3`;
+}
+function fmt(ms, tenth=true){
+  const s = ms/1000, m = Math.floor(s/60), r = s - m*60;
+  return tenth ? `${String(m).padStart(2,'0')}:${r.toFixed(1).padStart(4,'0')}` : `${m}:${String(Math.floor(r)).padStart(2,'0')}`;
+}
+
+/* ---------- screens ---------- */
+const stage = $('stage');
+function showOverlay(id){
+  ['ovStart','ovFake','ovOver'].forEach(o => $(o).hidden = o !== id);
+  stage.classList.toggle('menu', !!id);
+}
+function startRun(){
+  lives = 3; deaths = 0; elapsed = 0; reached = 1; parts.length = 0;
+  showOverlay(null);
+  loadLevel(0);
+  cv.focus && cv.focus();
+}
+function showFakeEnd(){
+  state = 'fakeend';
+  $('fake2').hidden = true; $('fake3').hidden = true; $('btnNext').hidden = true;
+  showOverlay('ovFake');
+  setTimeout(() => { $('fake2').hidden = false; }, 1800);
+  setTimeout(() => { $('fake3').hidden = false; $('btnNext').hidden = false; }, 3000);
+}
+$('btnNext').addEventListener('click', () => { showOverlay(null); loadLevel(N - 1); });
+
+let challenger = null;
+(function readHash(){
+  const m = /^#tantang-([A-Za-z0-9]{1,16})-L(\d{1,2})$/.exec(location.hash || '');
+  if (!m || +m[2] < 1 || +m[2] > N) return;
+  challenger = {name:m[1], level:+m[2]};
+  const b = $('challengeBanner');
+  b.innerHTML = `<b>${m[1]}</b> menantangmu! Dia tumbang di Level ${m[2]} dari ${N}. Bisa lebih jauh?`;
+  b.hidden = false;
+})();
+
+function loadBest(){ try { return JSON.parse(localStorage.getItem('calvin-best')) || null; } catch(e){ return null; } }
+function saveBest(b){ try { localStorage.setItem('calvin-best', JSON.stringify(b)); } catch(e){} }
+
+const OVER_QUOTES = [
+  'Sudah kubilang, tidak ada yang bisa menang.',
+  'Game ini kutulis seperti aku menulis rumus hati: tanpa celah.',
+  'Kamu boleh coba lagi. Hasilnya tetap sama.',
+  'Chriss saja kalah. Apalagi kamu.'
+];
+function gameOver(){
+  state = 'over';
+  let best = loadBest();
+  if (!best || reached > best.level || (reached === best.level && elapsed > best.time)) { best = {level:reached, time:elapsed}; saveBest(best); }
+  $('overTitle').innerHTML = reached === N ? 'Kamu tumbang di <em>final.exe</em>' : `Kamu tumbang di Level ${reached}`;
+  $('overCode').textContent = `exit code ${deaths} · nyawa = 0 · ${LEVELS[reached-1]().file}`;
+  $('overQuote').textContent = pick(OVER_QUOTES);
+  $('stLevel').textContent = `${reached}/${N}`;
+  $('stDeaths').textContent = deaths;
+  $('stTime').textContent = fmt(elapsed, false);
+  $('stBest').textContent = `${Math.min(best.level, N)}/${N}`;
+  const vs = $('vsResult');
+  if (challenger){
+    vs.hidden = false;
+    vs.innerHTML = reached > challenger.level ? `Kamu lebih jauh dari <b>${challenger.name}</b> (Level ${challenger.level}). Saatnya balas menantang!`
+      : reached === challenger.level ? `Seri dengan <b>${challenger.name}</b> di Level ${challenger.level}.`
+      : `<b>${challenger.name}</b> masih unggul (Level ${challenger.level}). Coba lagi?`;
+  } else vs.hidden = true;
+  $('shareOut').hidden = true; $('copyNote').textContent = '';
+  showOverlay('ovOver');
+}
+
+$('btnChallenge').addEventListener('click', () => {
+  const raw = $('nameInput').value.trim();
+  const name = raw.replace(/[^A-Za-z0-9]/g, '').slice(0,16) || 'Anonim';
+  const text = `Aku tumbang di Level ${reached}/${N} "Tantangan Mr Calvin" (mati ${deaths}x, ${fmt(elapsed,false)}). Katanya game ini mustahil dimenangkan. Berani lebih jauh dari aku? - ${raw || name}`;
+  $('challengeText').textContent = text;
+  $('shareOut').hidden = false;
+  try { location.hash = `tantang-${name}-L${reached}`; } catch(e){}
+});
+$('btnCopy').addEventListener('click', () => {
+  const text = $('challengeText').textContent;
+  const fallback = () => {
+    const r = document.createRange(); r.selectNodeContents($('challengeText'));
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    $('copyNote').textContent = 'Teks sudah dipilih. Salin manual ya.';
+  };
+  try {
+    navigator.clipboard.writeText(text).then(() => { $('copyNote').textContent = 'Tersalin!'; }, fallback);
+  } catch(e){ fallback(); }
+});
+$('btnRetry').addEventListener('click', startRun);
+$('btnStart').addEventListener('click', startRun);
+
+const EASY = ['Tidak ada mode mudah.','Serius, tidak ada.','Berhenti mencari.','Mr Calvin tertawa.','Mode mudah'];
+let easyI = 0;
+$('btnEasy').addEventListener('click', e => {
+  const b = e.currentTarget;
+  b.textContent = EASY[easyI % EASY.length]; easyI++;
+  const dx = Math.round((Math.random()-0.5)*120), dy = Math.round((Math.random()-0.5)*20);
+  b.style.transform = `translate(${dx}px, ${dy}px)`;
+});
+
+/* ---------- input ---------- */
+const KEYMAP = {ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump'};
+addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' && e.code === 'Space' && state !== 'play')) return;
+  const k = KEYMAP[e.code]; if (!k) return;
+  e.preventDefault();
+  if (k === 'jump' && !keys.jump) jumpBuf = 7;
+  keys[k] = true;
+});
+addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
+addEventListener('blur', () => { keys.left = keys.right = keys.jump = false; });
+
+function bindPad(id, k){
+  const b = $(id);
+  const on = e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch(_){} if (k === 'jump' && !keys.jump) jumpBuf = 7; keys[k] = true; b.classList.add('on'); };
+  const off = () => { keys[k] = false; b.classList.remove('on'); };
+  b.addEventListener('pointerdown', on);
+  ['pointerup','pointercancel','lostpointercapture'].forEach(ev => b.addEventListener(ev, off));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+}
+bindPad('padL','left'); bindPad('padR','right'); bindPad('padJ','jump');
+addEventListener('touchstart', () => document.body.classList.add('touch'), {once:true, passive:true});
+
+/* ---------- loop ---------- */
+L = prepLevel(LEVELS[0]());
+p = {x:L.start[0], y:L.start[1], w:22, h:34, vx:0, vy:0, ground:null};
+updateHUD();
+
+let last = performance.now(), acc = 0;
+const STEP = 1000/60;
+function frame(now){
+  const dt = Math.min(100, now - last); last = now;
+  acc += dt;
+  while (acc >= STEP){ step(); acc -= STEP; }
+  if (state === 'play' || state === 'dead' || state === 'win'){ elapsed += dt; $('hudTime').textContent = fmt(elapsed); }
+  draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
