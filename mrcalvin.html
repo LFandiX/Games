@@ -1,6 +1,40 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Tantangan Mr Calvin</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>
+/* =====================================================================
+   PENGATURAN GAME — cukup ubah dua baris di bawah ini
+   ---------------------------------------------------------------------
+   LIFE   : jumlah nyawa. Ikon korek api dan semua teks "x nyawa" ikut berubah.
+   LEVELS : nomor level yang aktif, sesuai urutan main.
+            - Hapus nomor untuk mematikan level, contoh: [1, 2, 5, 19]
+            - Urutan boleh diacak, contoh: [3, 1, 2]
+            - final.exe TIDAK perlu ditulis, selalu otomatis jadi level terakhir
+            - Nomor level dan namanya:
+               1 hello_world.py      lantai runtuh, duri kejutan
+               2 rumus_hati.cpp      tangga rapuh, blok jatuh
+               3 chriss.exe          blok tak terlihat, kontrol terbalik
+               4 debug_cinta.js      hati palsu, hati asli tersembunyi
+               5 array_hati.java     lift kiri-kanan
+               6 binary_search.go    tangga palsu
+               7 dark_mode.css       gelap total
+               8 deadline_v2.rs      langit-langit deadline turun
+               9 segfault.c          campuran semua jebakan awal
+              10 stack_overflow.py   bug berjalan, pegas
+              11 heap_sort.cpp       lantai berkedip, piston duri
+              12 hash_map.js         angin
+              13 kernel_panic.rs     dinding deadline mengejar
+              14 garbage_collector.go gravitasi rendah
+              15 blackout.sql        gelap + bug + piston + lift
+              16 race_condition.ts   dikejar deadline + angin
+              17 merge_conflict.git  jalur palsu, blok tak terlihat
+              18 infinite_loop.java  lift naik-turun, bug terbang, deadline turun
+              19 production_bug.php  semuanya sekaligus, dikejar deadline
+   ===================================================================== */
+const GAME_CONFIG = {
+  LIFE: 3,
+  LEVELS: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+};
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -39,6 +73,8 @@ header p{margin:0;color:var(--muted);font-size:12.5px}
 .lives{display:flex;gap:4px}
 .lives svg{width:16px;height:24px;transition:opacity .3s, filter .3s}
 .lives svg.lost{opacity:.18;filter:grayscale(1)}
+.lives{flex-wrap:wrap;align-items:center}
+.lives b{color:var(--text);font-weight:600;margin-left:4px}
 .hud b{color:var(--text);font-weight:600}
 
 .stage{position:relative;background:var(--ink)}
@@ -95,7 +131,7 @@ body.touch .pad{display:flex}
 <div class="wrap">
   <header>
     <h1>Tantangan <span>Mr Calvin</span></h1>
-    <p>3 nyawa · 10 level · 0 pemenang sejauh ini</p>
+    <p id="metaLine">3 nyawa · 20 level · 0 pemenang sejauh ini</p>
   </header>
 
   <div class="ide">
@@ -103,7 +139,7 @@ body.touch .pad{display:flex}
       <div class="tab"><i></i><span id="tabName">hello_world.py</span></div>
       <div class="hud">
         <div class="lives" id="lives" aria-label="Nyawa"></div>
-        <span>Level <b id="hudLevel">1</b>/10</span>
+        <span>Level <b id="hudLevel">1</b>/<span id="hudTotal">20</span></span>
         <span>Mati <b id="hudDeaths">0</b></span>
         <span><b id="hudTime">00:00.0</b></span>
       </div>
@@ -116,7 +152,7 @@ body.touch .pad{display:flex}
         <div class="card">
           <div class="eyebrow">// ditulis oleh Mr Calvin · untuk yang merasa jenius</div>
           <h2>Bisakah kamu sampai ke <em>hati</em>?</h2>
-          <p>Bawa korek api kecil ini ke hati berbentuk <b>r = a(1 − sin θ)</b>. Kamu punya 3 nyawa untuk 10 level, dan petanya makin luas di setiap level. Setiap langkah ada jebakan, dan belum ada yang pernah menang.</p>
+          <p>Bawa korek api kecil ini ke hati berbentuk <b>r = a(1 − sin θ)</b>. Kamu punya <span class="cfgLife">3 nyawa</span> untuk <span class="cfgLevels">20 level</span>, dan petanya makin luas di setiap level. Setiap langkah ada jebakan, dan belum ada yang pernah menang.</p>
           <div class="challenge" id="challengeBanner" hidden></div>
           <div class="row">
             <button class="primary" id="btnStart">Mulai tantangan</button>
@@ -169,7 +205,7 @@ body.touch .pad{display:flex}
               <p class="muted">Link halaman ini sudah memuat namamu dan level-mu. Salin link game ini lalu kirim bersama pesan di atas. Temanmu akan melihat tantanganmu saat membukanya.</p>
             </div>
           </div>
-          <div class="row"><button id="btnRetry">Coba lagi (3 nyawa baru)</button></div>
+          <div class="row"><button id="btnRetry">Coba lagi (<span class="cfgLife">3 nyawa</span> baru)</button></div>
         </div>
       </div>
     </div>
@@ -205,7 +241,7 @@ const C = {};
 const MONO = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
 const DISP = '"Chakra Petch", system-ui, sans-serif';
 
-const GRAV = 0.7, SPEED = 4.2, JUMP = -13, MAXF = 16;
+const GRAV = 0.7, SPEED = 4.2, JUMP = -13, MAXF = 16, SPRING = -19;
 
 /* ---------- level building blocks ---------- */
 const plat = (x,y,w,h,o={}) => { const s = Object.assign({type:'plat',x,y,w,h,vy:0,falling:false,gone:false,timer:0,deadly:false}, o); if (s.move) s.move.dir = 1; return s; };
@@ -214,7 +250,62 @@ const hidden = (x,y,w,h) => plat(x,y,w,h,{type:'hidden',revealed:false});
 const block = (x,y,w,h,o={}) => plat(x,y,w,h,Object.assign({type:'block'}, o));
 const spike = (x,y,w,o={}) => Object.assign({x,y,w,h:20,t:o.hidden?0:1,popped:!o.hidden}, o);
 
-const LEVELS = [
+/* ---------- kit pembuat level (dipakai level 10–19) ----------
+   Peta disusun dari kiri ke kanan; setiap bagian menambah lebar peta.
+   G(lebar, ...isi)               tanah datar
+   PIT(lebar, ...isi)             jurang berduri yang harus dilompati
+   BRIDGE(lebar, pijakan, ...isi) jurang dengan pijakan [dx, y, lebar, jenis, opsi]
+       jenis: 'n' biasa · 'c' rapuh · 'f' palsu · 'b' berkedip · 's' pegas
+              'mx' lift kiri-kanan · 'my' lift naik-turun · 'h' blok tak terlihat
+   isi (posisi dihitung dari awal bagian):
+       pop(x) duri kejutan · drop(x) blok jatuh · piston(x, lebar, naik, turun, fase)
+       bug(x0, x1, kecepatan) bug berjalan · fly(x, y0, y1, kecepatan) bug terbang
+       rev(x0, x1) kontrol terbalik · wind(x0, x1, gaya) angin · lowgrav(x0, x1) gravitasi rendah
+       liar(x) hati palsu
+   Hati asli otomatis ada di ujung kanan peta. */
+const piece = (x, y, w, kind, o) => {
+  o = typeof o === 'number' ? {stand:o} : (o || {});
+  switch (kind){
+    case 'c':  return plat(x, y, w, 18, {fall:{stand:o.stand || 18}});
+    case 'f':  return fake(x, y, w, 18);
+    case 'b':  return plat(x, y, w, 18, {blink:{on:o.on || 80, off:o.off || 60, phase:o.phase || 0}});
+    case 's':  return plat(x, y, w, 14, {type:'spring', squish:0});
+    case 'mx': return plat(x, y, w, 16, {move:{ax:'x', a:x, b:x + o.r, speed:o.speed || 1.8}});
+    case 'my': return plat(x, y, w, 16, {move:{ax:'y', a:y, b:y + o.r, speed:o.speed || 1.4}});
+    case 'h':  return hidden(x, y, w, 20);
+    default:   return plat(x, y, w, 18);
+  }
+};
+const G = (w, ...ex) => (lv, x) => { lv.solids.push(plat(x, 480, w, 60)); ex.forEach(f => f(lv, x)); return x + w; };
+const PIT = (w, ...ex) => (lv, x) => { lv.spikes.push(spike(x, 540, w)); ex.forEach(f => f(lv, x)); return x + w; };
+const BRIDGE = (w, items, ...ex) => (lv, x) => {
+  lv.spikes.push(spike(x, 540, w));
+  items.forEach(([dx, y, pw, kind, o]) => lv.solids.push(piece(x + dx, y, pw, kind, o)));
+  ex.forEach(f => f(lv, x));
+  return x + w;
+};
+const pop = (o, w = 40) => (lv, x) => lv.spikes.push(spike(x + o, 480, w, {hidden:true, trig:x + o - 35}));
+const drop = (o, w = 60) => (lv, x) => lv.solids.push(block(x + o, -80, w, 60, {fall:{near:x + o - 30}, deadly:true, land:480}));
+const piston = (o, w, on, off, phase = 0) => (lv, x) => lv.spikes.push(spike(x + o, 480, w, {cycle:{on, off, phase}}));
+const bug = (o0, o1, speed = 1.6) => (lv, x) => lv.bugs.push({ax:'x', x:x + o0, y:464, w:26, h:16, a:x + o0, b:x + o1 - 26, speed, dir:1});
+const fly = (o, y0, y1, speed = 2) => (lv, x) => lv.bugs.push({ax:'y', x:x + o, y:y0, w:24, h:18, a:y0, b:y1, speed, dir:1, fly:true});
+const rev = (o0, o1) => (lv, x) => lv.zones.push({type:'reverse', x0:x + o0, x1:x + o1});
+const wind = (o0, o1, force) => (lv, x) => lv.zones.push({type:'wind', x0:x + o0, x1:x + o1, force});
+const lowgrav = (o0, o1) => (lv, x) => lv.zones.push({type:'float', x0:x + o0, x1:x + o1});
+const liar = o => (lv, x) => lv.extraGoals.push({x:x + o, y:440, fake:true});
+function build(meta, parts){
+  const lv = Object.assign({start:[40,446], solids:[], spikes:[], bugs:[], zones:[], extraGoals:[]}, meta);
+  let x = 0;
+  for (const part of parts) x = part(lv, x);
+  lv.width = x;
+  lv.goal = {x:x - 60, y:440};
+  if (meta.hops){ lv.goal.hops = meta.hops.map(([dx, y]) => [x + dx, y]); lv.goal.hopDist = meta.hopDist || 100; }
+  if (meta.chase) lv.chase = Object.assign({x:-160, delay:150}, meta.chase);
+  return lv;
+}
+
+/* ---------- daftar level: urutan = nomor level (1, 2, 3, ...) ---------- */
+const LEVEL_LIBRARY = [
   () => ({
     file:'hello_world.py', start:[40,446],
     msg:'Level satu. Gampang kok, percaya deh sama aku.',
@@ -318,7 +409,7 @@ const LEVELS = [
   /* ---- level 9: 3200 px, semua jebakan sekaligus ---- */
   () => ({
     file:'segfault.c', start:[40,446], width:3200,
-    msg:'Level terakhir sebelum tamat. Semua jebakanku ada di sini.',
+    msg:'Semua jebakan lamaku sekaligus. Dan ini belum setengah jalan.',
     solids:[plat(0,480,420,60), hidden(400,400,110,20), plat(650,480,350,60),
             plat(1020,480,90,16,{move:{ax:'x',a:1020,b:1160,speed:2}}),
             plat(1350,480,400,60),
@@ -335,7 +426,190 @@ const LEVELS = [
     zones:[{type:'reverse',x0:700,x1:900}],
     code:['int main(void) {','  int *hati = NULL;','  *hati = 1; // segfault','  free(lantai);','  free(lantai); // lagi','  return nyawa--;','}']
   }),
-  () => {
+  /* ---- level 10: bug berjalan dan pegas ---- */
+  () => build({
+    file:'stack_overflow.py',
+    msg:'Kodeku sekarang punya bug. Yang ini bisa menggigit.',
+    code:['def lompat(n):','    return lompat(n + 1)','# RecursionError: kamu','bugs = ["jalan", "gigit"]','pegas.tekan()','while hidup:','    nyawa -= 1']
+  }, [
+    G(420, bug(200,380,1.4)), PIT(120), G(320, pop(160)),
+    BRIDGE(380, [[50,470,60,'s'],[190,280,120,'n']]),
+    G(460, bug(80,420,1.8), drop(300)), PIT(130),
+    G(360, pop(120), bug(180,330,2)),
+    BRIDGE(400, [[40,470,60,'s'],[180,260,110,'c',22],[330,360,70,'n']]),
+    G(480, liar(200), drop(380)), G(320)
+  ]),
+  /* ---- level 11: lantai berkedip dan piston duri ---- */
+  () => build({
+    file:'heap_sort.cpp',
+    msg:'Lantai yang berkedip, duri yang naik-turun. Hafalkan iramanya.',
+    code:['void heapify(int* lantai){','  if (detik % 2) hilang();','  piston.naik();','  piston.turun();','  // ritme = 140 ms','}','return EXIT_NYAWA;']
+  }, [
+    G(360, piston(200,60,70,50)),
+    BRIDGE(420, [[50,470,90,'b',{on:80,off:60}],[200,430,90,'b',{on:80,off:60,phase:70}],[330,470,90,'n']]),
+    G(400, piston(100,60,60,60), piston(240,60,60,60,60), bug(300,390,1.6)),
+    PIT(130), G(300, pop(180)),
+    BRIDGE(520, [[40,440,80,'b',{on:70,off:70}],[180,380,80,'b',{on:70,off:70,phase:35}],[320,440,80,'b',{on:70,off:70,phase:70}],[450,470,70,'c',20]]),
+    G(420, drop(150), piston(300,80,50,70,20)),
+    PIT(140), G(380, liar(220), bug(60,200,2)),
+    G(300, piston(120,60,60,60,30)), G(300)
+  ]),
+  /* ---- level 12: angin ---- */
+  () => build({
+    file:'hash_map.js',
+    msg:'Anginnya kencang hari ini. Kadang mendorong, kadang menahan.',
+    code:['const angin = new Map();','angin.set("kiri", 1.8);','angin.set("kanan", 2.5);','// collision? itu kamu','pemain.x += angin.get(arah);','delete lantai[i];','export default sedih;']
+  }, [
+    G(560, bug(300,520,1.2)),
+    G(500, wind(0,500,-1.8), bug(200,460,1.2)),
+    PIT(80, wind(0,80,-1.8)),
+    G(340, wind(0,200,-1.8), pop(260)),
+    BRIDGE(420, [[30,470,90,'mx',{r:290,speed:1.8}]], wind(0,420,0.8)),
+    G(460, drop(120), bug(250,440,2.2)),
+    PIT(160, wind(0,160,2.5)),
+    G(360, pop(90)),
+    BRIDGE(380, [[50,420,80,'n'],[190,360,80,'c',18],[310,420,70,'n']], wind(0,380,-1.2)),
+    G(440, liar(200), wind(250,440,-2.2), bug(300,420,1.5)),
+    G(300)
+  ]),
+  /* ---- level 13: dinding deadline mengejar ---- */
+  () => build({
+    file:'kernel_panic.rs',
+    msg:'Dinding deadline mengejar dari belakang. Jangan berhenti.',
+    chase:{speed:2.6},
+    code:['fn kejar() -> ! {','  loop {','    deadline.x += 2.6;','    if pemain.lambat() {','      panic!("telat");','    }','  }','}']
+  }, [
+    G(500, bug(250,450,1.5)), PIT(130),
+    G(420, pop(200), drop(330)), PIT(120),
+    BRIDGE(360, [[50,430,80,'n'],[180,380,80,'n'],[290,430,70,'c',20]]),
+    G(500, bug(100,300,2), bug(330,480,2.2)), PIT(140),
+    G(380, piston(150,60,40,40)),
+    BRIDGE(400, [[40,470,60,'s'],[180,270,180,'n']]),
+    G(560, pop(140), drop(300), bug(380,540,1.8)), PIT(130),
+    G(500, liar(250)), G(400)
+  ]),
+  /* ---- level 14: gravitasi rendah ---- */
+  () => build({
+    file:'garbage_collector.go',
+    msg:'Gravitasinya sudah kubersihkan. Sebagian.',
+    code:['func gc() {','  gravitasi *= 0.45','  runtime.GC()','  // lantai ikut dibuang','  defer nyawa--','}','go kabur(hati)']
+  }, [
+    G(560),
+    BRIDGE(300, [], lowgrav(-40,340)),
+    G(380, bug(100,340,1.8)),
+    BRIDGE(460, [[190,400,70,'b',{on:60,off:60}]], lowgrav(0,460)),
+    G(360, pop(180), piston(280,50,60,60)),
+    BRIDGE(440, [[40,470,60,'s'],[200,250,90,'c',18],[340,330,80,'b',{on:90,off:50}]]),
+    G(480, drop(150), bug(260,460,2.2)),
+    BRIDGE(360, [], lowgrav(-40,400), fly(170,250,450,2)),
+    G(400, liar(150), pop(300)), PIT(130),
+    G(420, bug(60,380,2.4)), G(300)
+  ]),
+  /* ---- level 15: gelap + semua jebakan ---- */
+  () => build({
+    file:'blackout.sql', dark:true,
+    msg:'Lampunya mati lagi. Kali ini ada yang merayap di kegelapan.',
+    code:['SELECT * FROM lantai','WHERE ada = TRUE;','-- 0 rows returned','UPDATE pemain','SET nyawa = nyawa - 1;','DROP TABLE harapan;','COMMIT;']
+  }, [
+    G(500, bug(250,480,1.4)), PIT(130),
+    G(380, piston(180,60,60,60)),
+    BRIDGE(400, [[50,440,80,'n'],[190,400,80,'b',{on:90,off:50}],[320,440,80,'n']]),
+    G(460, pop(120), bug(220,440,2)), PIT(140),
+    G(420, drop(150), piston(300,60,50,60,30)),
+    BRIDGE(420, [[30,470,90,'mx',{r:300,speed:2}]]),
+    G(500, rev(100,400), pop(330)),
+    BRIDGE(380, [[50,420,80,'c',18],[190,360,80,'c',18],[310,420,70,'c',18]]),
+    G(440, liar(160), bug(250,420,2.4)), PIT(130),
+    G(300, pop(150)), G(300)
+  ]),
+  /* ---- level 16: dikejar deadline + angin ---- */
+  () => build({
+    file:'race_condition.ts',
+    msg:'Angin membantumu. Deadline juga mengejarmu. Siapa yang lebih cepat?',
+    chase:{speed:2.7},
+    code:['async function balapan() {','  await Promise.race([','    pemain.lari(),','    deadline.kejar(),','  ]);','  // selalu deadline','}']
+  }, [
+    G(500), PIT(130, wind(0,130,1.5)),
+    G(320, bug(100,260,1.8)),
+    G(420, wind(0,420,1.5), bug(200,400,2)),
+    PIT(150, wind(0,150,1.5)),
+    G(400, pop(100), piston(260,60,40,40)),
+    BRIDGE(380, [[50,430,80,'n'],[180,380,80,'n'],[300,430,80,'c',18]]),
+    G(480, wind(0,200,-1.2), drop(300)), PIT(130),
+    G(440, bug(80,250,2.4), bug(300,430,2.4)),
+    BRIDGE(420, [[40,470,60,'s'],[190,270,190,'n']]),
+    G(520, pop(150), liar(330)), PIT(140),
+    G(460, piston(150,60,40,40,20), piston(300,60,40,40)),
+    G(320)
+  ]),
+  /* ---- level 17: jalur palsu ---- */
+  () => build({
+    file:'merge_conflict.git',
+    msg:'Ada dua jalan. Salah satunya hasil merge yang rusak.',
+    hops:[[-320,335]],
+    code:['<<<<<<< HEAD','lantai = asli','=======','lantai = palsu','>>>>>>> calvin','git push --force','# maaf ya']
+  }, [
+    G(420),
+    BRIDGE(400, [[40,470,100,'f'],[190,470,100,'f'],[70,400,80,'n'],[210,340,80,'n'],[340,300,60,'c',20]]),
+    G(380, rev(60,320), pop(200)),
+    BRIDGE(260, [[0,400,110,'h']]),
+    G(440, bug(100,400,2), drop(250)), PIT(140),
+    G(360, liar(100), pop(250)),
+    BRIDGE(440, [[40,470,90,'mx',{r:120,speed:1.8}],[300,420,80,'b',{on:80,off:60}]]),
+    G(480, rev(0,480), bug(150,450,2)), PIT(120),
+    G(400, pop(80), pop(260)),
+    BRIDGE(380, [[50,430,80,'c',16],[190,400,80,'f'],[190,340,80,'c',16],[320,400,60,'n']]),
+    G(500, liar(200), drop(330)), PIT(130),
+    G(360, piston(150,60,50,50)), G(320)
+  ]),
+  /* ---- level 18: lift naik-turun, bug terbang, deadline turun ---- */
+  () => build({
+    file:'infinite_loop.java',
+    msg:'Lift ini naik turun selamanya. Deadline di atas juga turun pelan-pelan.',
+    ceil:{y:-30, speed:0.14, delay:150},
+    code:['for (;;) {','  lift.naik();','  lift.turun();','  bug.terbang();','  deadline.turun(0.14);','}','// unreachable code']
+  }, [
+    G(400),
+    BRIDGE(420, [[40,470,60,'s'],[180,260,100,'n'],[320,330,70,'my',{r:120,speed:1.2}]]),
+    G(380, fly(200,300,460,2.2)), PIT(130),
+    G(420, bug(100,380,2.2), pop(300)),
+    BRIDGE(460, [[40,300,80,'my',{r:170,speed:1.4}],[190,260,90,'n'],[330,330,90,'my',{r:140,speed:1.4}]]),
+    G(500, drop(150), fly(330,280,460,2.6)), PIT(140),
+    G(400, piston(120,60,50,50), bug(200,380,2.4)),
+    BRIDGE(440, [[40,470,90,'mx',{r:250,speed:2.2}]], fly(220,260,440,2)),
+    G(480, pop(140), liar(300)),
+    BRIDGE(380, [[50,430,80,'c',16],[180,370,80,'b',{on:70,off:50}],[300,430,80,'c',16]]),
+    G(460, bug(60,420,2.6)), PIT(130),
+    G(400, fly(200,300,460,2.4), pop(320)), G(320)
+  ]),
+  /* ---- level 19: semuanya sekaligus, dikejar deadline ---- */
+  () => build({
+    file:'production_bug.php',
+    msg:'Bug di production. Semua jebakanku keluar bersamaan. Lari!',
+    chase:{speed:2.5},
+    hops:[[-220,335]],
+    code:['<?php','// deploy hari Jumat sore','$lantai = null;','$angin = $_GET["badai"];','if ($pemain) { die(); }','echo "selamat jalan";','?>']
+  }, [
+    G(500), PIT(140),
+    G(420, bug(120,400,2.2), pop(320)),
+    BRIDGE(420, [[40,470,60,'s'],[180,260,120,'c',20],[340,360,70,'n']]),
+    G(460, wind(0,460,1.4), piston(200,60,40,40), drop(360)),
+    PIT(150, wind(0,150,1.4)),
+    G(400, rev(80,300), bug(120,360,2)),
+    BRIDGE(420, [[50,440,80,'b',{on:90,off:40}],[190,390,80,'b',{on:90,off:40,phase:45}],[320,440,90,'c',18]]),
+    G(500, pop(90), fly(260,300,460,2.6), liar(420)),
+    BRIDGE(300, [], lowgrav(-40,340)),
+    G(440, piston(120,60,40,40), piston(240,60,40,40,40), bug(300,430,2.6)),
+    PIT(140),
+    G(380, drop(120), pop(280)),
+    BRIDGE(260, [[0,400,110,'h']]),
+    G(520, bug(80,500,2.8), liar(250)), PIT(130),
+    G(420, pop(200)), G(340)
+  ])
+];
+
+/* ---------- final.exe: selalu otomatis jadi level terakhir ---------- */
+const FINAL_LEVEL = () => {
     const s = [];
     for (let i = 0; i < 18; i++) s.push(plat(i*80,480,80,60,{fall:{stand:i===0?50:14}}));
     s.push(plat(190,360,100,16,{fall:{stand:18}}), fake(500,330,100,16), plat(770,300,110,16,{fall:{stand:18}}), plat(1080,340,110,16,{fall:{stand:18}}));
@@ -349,11 +623,17 @@ const LEVELS = [
       ceil:{y:-30,speed:0.5,delay:60},
       code:['while (true) {','  hati.kabur();','  lantai.runtuh();','  deadline.turun();','}','// baris ini tidak','// pernah tercapai']
     };
-  }
-];
+};
+
+/* ---------- membaca GAME_CONFIG ---------- */
+const CFG = typeof GAME_CONFIG !== 'undefined' ? GAME_CONFIG : {};
+const MAX_LIFE = Math.max(1, Math.min(99, Math.floor(Number(CFG.LIFE)) || 3));
+const LEVEL_IDS = Array.isArray(CFG.LEVELS) ? CFG.LEVELS : LEVEL_LIBRARY.map((_, i) => i + 1);
+const LEVELS = LEVEL_IDS.map(n => LEVEL_LIBRARY[Number(n) - 1]).filter(Boolean).concat([FINAL_LEVEL]);
+const N = LEVELS.length;
 
 /* ---------- state ---------- */
-let L = null, p = null, cur = 0, lives = 3, deaths = 0, elapsed = 0, reached = 1;
+let L = null, p = null, cur = 0, lives = MAX_LIFE, deaths = 0, elapsed = 0, reached = 1;
 let state = 'menu', stT = 0, tick = 0, coyote = 0, jumpBuf = 0, reversed = false, teleCount = 0;
 let msgText = '', msgT = 0, deathReason = '';
 const parts = [];
@@ -365,15 +645,17 @@ const TAUNTS = {
   crush:['Kenapa tidak lihat ke atas?','Blok itu jatuh tepat waktu. Seperti rencanaku.'],
   fake:['Hati palsu. Klasik.','Tidak semua yang bersinar itu asli.'],
   deadline:['Langit-langit itu namanya deadline.','Deadline tidak pernah menunggu.'],
-  spike:['Duri itu tadi tidak ada, kan?','Kejutan!']
+  spike:['Duri itu tadi tidak ada, kan?','Kejutan!'],
+  bug:['Itu bukan bug. Itu fitur.','Bug-ku lebih pintar darimu.','Sudah kubilang, jangan sentuh bug di production.']
 };
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 function setMsg(t, f){ msgText = t; msgT = f; }
-const N = LEVELS.length;
 let cam = 0;
 function prepLevel(l){
   l.width = l.width || W;
+  l.solids = l.solids || []; l.spikes = l.spikes || []; l.bugs = l.bugs || []; l.zones = l.zones || [];
+  l.t = 0;
   l.goals = [l.goal, l.goal2, ...(l.extraGoals || [])].filter(Boolean);
   l.goals.forEach(g => { g.tx = g.x; g.ty = g.y; });
   return l;
@@ -394,7 +676,8 @@ function loadLevel(i){
 
 /* ---------- physics ---------- */
 const hit = (a,b) => a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
-const solid = s => !s.gone && s.type !== 'fake' && (s.type !== 'hidden' || s.revealed);
+const blinkOn = s => !s.blink || ((L.t + s.blink.phase) % (s.blink.on + s.blink.off)) < s.blink.on;
+const solid = s => !s.gone && s.type !== 'fake' && (s.type !== 'hidden' || s.revealed) && blinkOn(s);
 
 function step(){
   tick++;
@@ -403,6 +686,7 @@ function step(){
   if (state === 'dead'){ if (--stT <= 0) afterDeath(); return; }
   if (state === 'win'){ if (--stT <= 0) afterWin(); return; }
   if (state !== 'play') return;
+  L.t++;
 
   let cx = p.x + p.w/2;
 
@@ -427,21 +711,25 @@ function step(){
     }
   }
 
+  const inZone = t => L.zones.find(z => z.type === t && cx >= z.x0 && cx <= z.x1);
   let dir = (keys.right?1:0) - (keys.left?1:0);
-  reversed = L.zones.some(z => z.type === 'reverse' && cx >= z.x0 && cx <= z.x1);
+  reversed = !!inZone('reverse');
   if (reversed) dir = -dir;
   p.vx = dir * SPEED;
+  const wz = inZone('wind'), fz = inZone('float');
   if (p.ground) coyote = 6; else if (coyote > 0) coyote--;
   if (jumpBuf > 0) jumpBuf--;
   if (jumpBuf > 0 && coyote > 0){ p.vy = JUMP; coyote = 0; jumpBuf = 0; p.ground = null; }
-  if (!keys.jump && p.vy < -5) p.vy = -5;
-  p.vy = Math.min(p.vy + GRAV, MAXF);
+  if (p.vy >= 0) p.boost = false;
+  if (!keys.jump && !p.boost && p.vy < -5) p.vy = -5;
+  p.vy = Math.min(p.vy + (fz ? GRAV*0.45 : GRAV), fz ? 7 : MAXF);
 
-  p.x += p.vx;
+  const dx = p.vx + (wz ? wz.force : 0);
+  p.x += dx;
   p.x = Math.max(0, Math.min(L.width - p.w, p.x));
   for (const s of L.solids){
     if (!solid(s) || !hit(p,s)) continue;
-    if (p.vx > 0) p.x = s.x - p.w; else if (p.vx < 0) p.x = s.x + s.w;
+    if (dx > 0) p.x = s.x - p.w; else if (dx < 0) p.x = s.x + s.w;
   }
 
   p.y += p.vy; p.ground = null;
@@ -452,7 +740,11 @@ function step(){
       continue;
     }
     if (!solid(s) || !hit(p,s)) continue;
-    if (p.vy >= 0){ p.y = s.y - p.h; p.vy = 0; p.ground = s; }
+    if (p.vy >= 0){
+      p.y = s.y - p.h;
+      if (s.type === 'spring'){ p.vy = SPRING; p.boost = true; s.squish = 10; burst(p.x+11, p.y+p.h, C.flame, 8); }
+      else { p.vy = 0; p.ground = s; }
+    }
     else { p.y = s.y + s.h; p.vy = 0; }
   }
 
@@ -460,12 +752,23 @@ function step(){
   const cy = p.y + p.h/2;
 
   for (const k of L.spikes){
-    if (!k.popped && ((k.trig != null && cx > k.trig) || (k.trigL != null && cx < k.trigL))) k.popped = true;
-    if (k.popped && k.t < 1) k.t = Math.min(1, k.t + 0.25);
+    if (k.cycle){
+      const c = k.cycle, up = ((L.t + c.phase) % (c.on + c.off)) < c.on;
+      k.t = up ? Math.min(1, k.t + 0.25) : Math.max(0, k.t - 0.25);
+    } else {
+      if (!k.popped && ((k.trig != null && cx > k.trig) || (k.trigL != null && cx < k.trigL))) k.popped = true;
+      if (k.popped && k.t < 1) k.t = Math.min(1, k.t + 0.25);
+    }
     if (k.t > 0.5){
       const top = k.y - k.h*k.t + 6;
       if (p.x+p.w > k.x+4 && p.x < k.x+k.w-4 && p.y+p.h > top && p.y < k.y) return die(k.y >= H ? 'fall' : 'spike');
     }
+  }
+
+  for (const b of L.bugs){
+    b[b.ax] += b.dir * b.speed;
+    if (b[b.ax] >= b.b){ b[b.ax] = b.b; b.dir = -1; } else if (b[b.ax] <= b.a){ b[b.ax] = b.a; b.dir = 1; }
+    if (p.x + p.w > b.x + 4 && p.x < b.x + b.w - 4 && p.y + p.h > b.y + 3 && p.y < b.y + b.h - 2) return die('bug');
   }
 
   for (const g of L.goals){
@@ -495,6 +798,11 @@ function step(){
     const c = L.ceil;
     if (c.delay > 0) c.delay--; else c.y += c.speed;
     if (p.y < c.y + 14) return die('deadline');
+  }
+  if (L.chase){
+    const c = L.chase;
+    if (c.delay > 0) c.delay--; else c.x += c.speed;
+    if (p.x < c.x + 10) return die('deadline');
   }
   if (p.y > H + 30) return die('fall');
   cam += (camTarget() - cam) * 0.15;
@@ -535,11 +843,17 @@ function drawBackground(){
 
 function drawSolid(s){
   if (s.gone || (s.type === 'hidden' && !s.revealed)) return;
+  if (s.blink && !blinkOn(s)){
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1; ctx.setLineDash([3,5]); ctx.strokeRect(s.x+.5, s.y+.5, s.w-1, s.h-1); ctx.setLineDash([]);
+    return;
+  }
+  if (s.type === 'spring'){ drawSpring(s); return; }
   let x = s.x, y = s.y;
   if (s.fall && s.fall.stand != null && s.timer > 0 && !s.falling) x += (Math.random()-0.5)*3;
+  if (s.blink && s.blink.on - ((L.t + s.blink.phase) % (s.blink.on + s.blink.off)) < 24) ctx.globalAlpha = (L.t >> 2) % 2 ? 0.35 : 0.85;
   ctx.fillStyle = s.type === 'block' ? C.panel2 : C.panel;
   ctx.fillRect(x, y, s.w, s.h);
-  ctx.fillStyle = s.type === 'hidden' ? C.heart : C.line;
+  ctx.fillStyle = s.type === 'hidden' ? C.heart : (s.blink ? C.steel : C.line);
   ctx.fillRect(x, y, s.w, 3);
   if (s.type === 'hidden'){
     ctx.strokeStyle = C.heart; ctx.setLineDash([4,4]); ctx.strokeRect(x+.5, y+.5, s.w-1, s.h-1); ctx.setLineDash([]);
@@ -571,8 +885,66 @@ function drawSolid(s){
   ctx.globalAlpha = 1;
 }
 
+function drawSpring(s){
+  const sq = s.squish > 0 ? s.squish-- : 0;
+  const top = s.y + sq * 0.6, bot = s.y + s.h;
+  ctx.fillStyle = C.panel2; ctx.fillRect(s.x, bot - 4, s.w, 4);
+  ctx.strokeStyle = C.steel; ctx.lineWidth = 2; ctx.beginPath();
+  for (let i = 0; i <= 4; i++) ctx.lineTo(i % 2 ? s.x + 10 : s.x + s.w - 10, top + 3 + i * (bot - 4 - top - 3) / 4);
+  ctx.stroke();
+  ctx.fillStyle = C.flame; ctx.fillRect(s.x, top, s.w, 4);
+}
+
+function drawBug(b){
+  const x = b.x, y = b.y, wig = Math.sin(L.t * 0.45) * 2;
+  if (b.fly){
+    ctx.fillStyle = C.steel; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.ellipse(x + 7, y - 2, 7, 3 + wig, -0.4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + b.w - 7, y - 2, 7, 3 - wig, 0.4, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.strokeStyle = C.steel; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++){ const lx = x + 6 + i*7; ctx.beginPath(); ctx.moveTo(lx, y + b.h - 4); ctx.lineTo(lx + (i % 2 ? wig : -wig), y + b.h + 1); ctx.stroke(); }
+  }
+  ctx.fillStyle = C.err; ctx.beginPath(); ctx.ellipse(x + b.w/2, y + b.h/2, b.w/2, b.h/2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x + b.w/2, y + 2); ctx.lineTo(x + b.w/2, y + b.h - 2); ctx.stroke();
+  const hx = b.ax === 'x' && b.dir < 0 ? x : x + b.w;
+  ctx.fillStyle = C.steel; ctx.beginPath(); ctx.arc(hx, y + b.h/2 - 1, 4, 0, Math.PI*2); ctx.fill();
+}
+
+function drawZone(z, ox){
+  if (z.x1 < ox || z.x0 > ox + W || z.type === 'reverse') return;
+  if (z.type === 'wind'){
+    ctx.font = '600 18px ' + MONO; ctx.fillStyle = C.steel; ctx.globalAlpha = 0.18;
+    const sh = ((L.t * z.force) % 60 + 60) % 60;
+    for (let y = 150; y <= 430; y += 70)
+      for (let x = z.x0 + sh - 60 + (y % 140 ? 30 : 0); x < z.x1 - 10; x += 60)
+        if (x >= z.x0) ctx.fillText(z.force > 0 ? '»' : '«', x, y);
+    ctx.globalAlpha = 1;
+  } else if (z.type === 'float'){
+    ctx.fillStyle = C.flame; ctx.globalAlpha = 0.05; ctx.fillRect(z.x0, 0, z.x1 - z.x0, H);
+    ctx.globalAlpha = 0.4; ctx.font = '11px ' + MONO; ctx.fillText('gravitasi *= 0.45', z.x0 + 10, 130);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawChase(c, ox){
+  if (c.x < ox - 40) return;
+  const left = ox - 20;
+  ctx.fillStyle = C.panel2; ctx.fillRect(left, 0, c.x - left, H);
+  ctx.fillStyle = C.err; ctx.fillRect(c.x - 3, 0, 3, H);
+  ctx.fillStyle = C.steel; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
+  for (let y = 0; y < H; y += 20){ ctx.beginPath(); ctx.moveTo(c.x, y); ctx.lineTo(c.x + 14, y + 10); ctx.lineTo(c.x, y + 20); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  ctx.save(); ctx.translate(c.x - 18, H/2); ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = C.err; ctx.font = '700 16px ' + DISP; ctx.textAlign = 'center'; ctx.fillText('DEADLINE', 0, 0);
+  ctx.restore();
+}
+
 function drawSpikes(k){
-  if (k.t <= 0) return;
+  if (k.t <= 0){
+    if (k.cycle){ ctx.fillStyle = C.steel; ctx.globalAlpha = 0.4; ctx.fillRect(k.x, k.y - 3, k.w, 3); ctx.globalAlpha = 1; }
+    return;
+  }
   const n = Math.max(1, Math.round(k.w / 20)), sw = k.w / n, top = k.y - k.h * k.t;
   ctx.fillStyle = C.steel; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5;
   for (let i = 0; i < n; i++){
@@ -651,8 +1023,12 @@ function draw(){
   if (!L) return;
   const ox = Math.round(cam);
   ctx.save(); ctx.translate(-ox, 0);
+  for (const z of L.zones) drawZone(z, ox);
   for (const s of L.solids) if (s.x + s.w > ox - 20 && s.x < ox + W + 20) drawSolid(s);
+  ctx.globalAlpha = 1;
   for (const k of L.spikes) if (k.x + k.w > ox && k.x < ox + W) drawSpikes(k);
+  for (const b of L.bugs) if (b.x + b.w > ox && b.x < ox + W) drawBug(b);
+  if (L.chase) drawChase(L.chase, ox);
   if (state !== 'dead') drawPlayer();
   for (const q of parts){ ctx.globalAlpha = Math.min(1, q.life/20); ctx.fillStyle = q.color; ctx.fillRect(q.x-2, q.y-2, 4, 4); }
   ctx.globalAlpha = 1;
@@ -671,6 +1047,10 @@ function draw(){
   }
   ctx.restore();
   if (L.ceil) drawCeil(L.ceil);
+  if (L.chase && L.chase.x < ox - 40 && L.chase.delay <= 0){
+    ctx.font = '600 12px ' + MONO; ctx.fillStyle = C.err;
+    ctx.fillText(`◀ DEADLINE ${Math.round(ox - L.chase.x)} px`, 44, H - 28);
+  }
   if (L.width > W){
     const bx = 60, bw = W - 120, by = H - 10;
     ctx.fillStyle = C.line; ctx.fillRect(bx, by, bw, 3);
@@ -694,11 +1074,21 @@ function draw(){
 /* ---------- HUD ---------- */
 const LIGHTER = '<svg viewBox="0 0 16 24" aria-hidden="true"><ellipse cx="5.5" cy="4.5" rx="3" ry="4.5" fill="var(--flame)"/><rect x="1" y="8" width="14" height="5" rx="1" fill="var(--steel)"/><rect x="0.5" y="12" width="15" height="12" rx="2.5" fill="var(--err)"/></svg>';
 function updateHUD(){
-  $('lives').innerHTML = [0,1,2].map(i => LIGHTER.replace('<svg', `<svg class="${i < lives ? '' : 'lost'}"`)).join('');
+  const icon = on => LIGHTER.replace('<svg', `<svg class="${on ? '' : 'lost'}"`);
+  $('lives').innerHTML = MAX_LIFE <= 10
+    ? Array.from({length:MAX_LIFE}, (_, i) => icon(i < lives)).join('')
+    : icon(lives > 0) + `<b>×${lives}</b>`;
+  $('lives').setAttribute('aria-label', `Nyawa ${lives} dari ${MAX_LIFE}`);
   $('hudDeaths').textContent = deaths;
   $('hudLevel').textContent = cur + 1;
   $('tabName').textContent = L ? L.file : 'hello_world.py';
-  $('statusLeft').textContent = `UTF-8 · ${L ? L.file : ''} · nyawa ${lives}/3`;
+  $('statusLeft').textContent = `UTF-8 · ${L ? L.file : ''} · nyawa ${lives}/${MAX_LIFE}`;
+}
+function applyConfigText(){
+  document.querySelectorAll('.cfgLife').forEach(e => e.textContent = `${MAX_LIFE} nyawa`);
+  document.querySelectorAll('.cfgLevels').forEach(e => e.textContent = `${N} level`);
+  $('metaLine').textContent = `${MAX_LIFE} nyawa · ${N} level · 0 pemenang sejauh ini`;
+  $('hudTotal').textContent = N;
 }
 function fmt(ms, tenth=true){
   const s = ms/1000, m = Math.floor(s/60), r = s - m*60;
@@ -712,7 +1102,7 @@ function showOverlay(id){
   stage.classList.toggle('menu', !!id);
 }
 function startRun(){
-  lives = 3; deaths = 0; elapsed = 0; reached = 1; parts.length = 0;
+  lives = MAX_LIFE; deaths = 0; elapsed = 0; reached = 1; parts.length = 0;
   showOverlay(null);
   loadLevel(0);
   cv.focus && cv.focus();
@@ -824,6 +1214,7 @@ addEventListener('touchstart', () => document.body.classList.add('touch'), {once
 /* ---------- loop ---------- */
 L = prepLevel(LEVELS[0]());
 p = {x:L.start[0], y:L.start[1], w:22, h:34, vx:0, vy:0, ground:null};
+applyConfigText();
 updateHUD();
 
 let last = performance.now(), acc = 0;
@@ -839,5 +1230,3 @@ function frame(now){
 requestAnimationFrame(frame);
 })();
 </script>
-
-</body></html>
