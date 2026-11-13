@@ -123,15 +123,70 @@ input[type=text]{font-family:var(--mono);font-size:14px;padding:10px 12px;border
 .pad button{width:76px;height:64px;font-size:22px;touch-action:none;border-radius:14px}
 .pad button.jump{width:110px;background:var(--flame);color:var(--ink);border-color:var(--flame);font-size:15px}
 .pad button.on{transform:scale(.94);filter:brightness(1.2)}
-body.touch .pad{display:flex}
-@media (pointer:coarse){.pad{display:flex}}
-.rotate{display:none;font-size:12px;color:var(--muted)}
+.rotate,.touchHint{display:none;color:var(--muted)}
 
 @media (max-width:700px){
-  .stage.menu canvas{display:none}
-  .overlay{position:relative;inset:auto;min-height:360px;padding-block:24px}
-  .rotate{display:block}
+  body:not(.mobile) .stage.menu canvas{display:none}
+  body:not(.mobile) .overlay{position:relative;inset:auto;min-height:360px;padding-block:24px}
 }
+
+/* ---------- mode HP: ukuran pakai vw/vh supaya tetap besar di layar kecil ---------- */
+body.mobile{overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body.mobile .wrap{max-width:none;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));box-sizing:border-box;padding-block:2.5vw;gap:2.5vw}
+body.mobile header h1{font-size:6.4vw}
+body.mobile header p{font-size:3vw}
+body.mobile .ide{flex:1;min-height:0;border-radius:2.4vw}
+body.mobile .tabs{font-size:3.4vw;gap:2vw;align-items:center}
+body.mobile .tab{padding:1.8vw 2.8vw;gap:1.6vw}
+body.mobile .tab i{width:2vw;height:2vw}
+body.mobile .hud{gap:3.2vw;padding:1.4vw 2.8vw}
+body.mobile .lives{gap:.8vw}
+body.mobile .lives svg{width:4vw;height:6vw}
+body.mobile .status{display:none}
+body.mobile .stage{flex:1;min-height:0}
+body.mobile .stage canvas{position:absolute;inset:0;margin:auto;aspect-ratio:auto;max-width:none}
+body.mobile .overlay{padding:4vw}
+body.mobile .card{font-size:3.8vw;gap:3vw;max-width:none;margin:auto 0}
+body.mobile .card h2{font-size:8.4vw}
+body.mobile .fake h2{font-size:15vw}
+body.mobile .eyebrow,body.mobile .quote b,body.mobile .stats span,body.mobile label,body.mobile .card .muted,body.mobile .msgbox{font-size:.82em}
+body.mobile .stats{grid-template-columns:repeat(2,1fr);gap:2vw}
+body.mobile .stats div{padding:2vw 2.8vw;border-radius:2vw}
+body.mobile .stats b{font-size:1.6em}
+body.mobile .row{gap:2.5vw}
+body.mobile .card button{font-size:1em;padding:.85em 1.3em;border-radius:2.4vw}
+body.mobile input[type=text]{font-size:max(16px,1em);padding:.7em .9em;border-radius:2.4vw}
+body.mobile .challenge,body.mobile .msgbox{padding:.7em .9em;border-radius:2vw}
+body.mobile .keys{display:none}
+body.mobile .touchHint{display:block;font-size:.9em}
+body.mobile:not(.land) .rotate{display:block;font-size:.85em}
+body.mobile .pad{display:flex;flex:0 0 auto;gap:3vw;padding:0 0 1vw}
+body.mobile .pad .lr{gap:3vw}
+body.mobile .pad button{width:25vw;height:min(21vw,17dvh);font-size:8vw;border-radius:4.5vw;padding:0}
+body.mobile .pad button.jump{width:40vw;font-size:6vw;letter-spacing:.04em}
+body.mobile.inmenu .pad{display:none}
+
+/* HP dimiringkan: arena penuh, tombol melayang di atas arena */
+body.mobile.land header{display:none}
+body.mobile.land .wrap{padding-block:1.5vh;gap:1.5vh;padding-left:calc(46vh + env(safe-area-inset-left,0px));padding-right:calc(36vh + env(safe-area-inset-right,0px))}
+body.mobile.land .tabs{font-size:3.8vh}
+body.mobile.land .tab{padding:1.2vh 2.4vh;gap:1.4vh}
+body.mobile.land .tab i{width:2vh;height:2vh}
+body.mobile.land .hud{padding:.8vh 2.4vh;gap:3.4vh}
+body.mobile.land .lives svg{width:4.2vh;height:6.3vh}
+body.mobile.land .overlay{padding:3vh 4vh}
+body.mobile.land.inmenu .wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body.mobile.land .card{font-size:3.9vh;gap:2.4vh;max-width:120vh}
+body.mobile.land .card h2{font-size:9vh}
+body.mobile.land .fake h2{font-size:16vh}
+body.mobile.land .stats{grid-template-columns:repeat(4,1fr);gap:2vh}
+body.mobile.land .stats div{padding:1.6vh 2.4vh;border-radius:2vh}
+body.mobile.land .row{gap:2.5vh}
+body.mobile.land .card button,body.mobile.land input[type=text],body.mobile.land .challenge,body.mobile.land .msgbox{border-radius:2vh}
+body.mobile.land .pad{position:fixed;left:0;right:0;bottom:0;z-index:5;pointer-events:none;align-items:flex-end;padding:0 calc(2.5vh + env(safe-area-inset-right,0px)) calc(6vh + env(safe-area-inset-bottom,0px)) calc(2.5vh + env(safe-area-inset-left,0px))}
+body.mobile.land .pad .lr{gap:2.5vh}
+body.mobile.land .pad button{pointer-events:auto;width:19vh;height:24vh;font-size:7vh;border-radius:5vh}
+body.mobile.land .pad button.jump{width:31vh;font-size:5vh}
 @media (prefers-reduced-motion:reduce){button{transition:none}}
 </style>
 
@@ -168,8 +223,8 @@ body.touch .pad{display:flex}
           <div class="keys">
             <span><kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd> gerak</span>
             <span><kbd>Spasi</kbd> / <kbd>↑</kbd> / <kbd>W</kbd> lompat</span>
-            <span>Di HP pakai tombol di bawah layar</span>
           </div>
+          <p class="touchHint">Gerak pakai tombol ◀ ▶, lompat pakai tombol LOMPAT.</p>
           <p class="rotate">Tips: miringkan HP ke mode landscape biar arenanya lebih besar.</p>
         </div>
       </div>
@@ -241,6 +296,34 @@ const DPR = Math.min(2, window.devicePixelRatio || 1);
 cv.width = W * DPR; cv.height = H * DPR;
 ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 const $ = id => document.getElementById(id);
+/* Lebar area yang terlihat (unit dunia). Di komputer 960; di HP menyesuaikan bentuk layar supaya semuanya lebih besar. */
+let VW = W, VH = H;
+const stageEl = $('stage');
+function detectMobile(){
+  const m = document.body.classList.contains('touch') || matchMedia('(pointer:coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover:none)').matches);
+  document.body.classList.toggle('mobile', m);
+  document.body.classList.toggle('land', m && innerWidth > innerHeight);
+}
+function fitCanvas(){
+  let vw = W, vh = H, cssW = '', cssH = '';
+  if (document.body.classList.contains('mobile')){
+    const sw = stageEl.clientWidth, sh = stageEl.clientHeight;
+    if (sw > 0 && sh > 0){
+      const ratio = sw / sh;
+      // HP: tampilkan 420 unit tinggi dunia (zoom masuk), lebar mengikuti bentuk layar
+      vh = 420; vw = Math.round(vh * ratio);
+      if (vw < 340){ vw = 340; vh = Math.min(H, Math.round(vw / ratio)); }
+      else if (vw > W){ vw = W; vh = Math.max(360, Math.round(W / ratio)); }
+      const k = Math.min(sw / vw, sh / vh);
+      cssW = (vw * k) + 'px'; cssH = (vh * k) + 'px';
+    }
+  }
+  cv.style.width = cssW; cv.style.height = cssH;
+  if (vw !== VW || vh !== VH || cv.width !== Math.round(vw * DPR)){
+    VW = vw; VH = vh; cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+}
 
 const css = getComputedStyle(document.documentElement);
 const C = {};
@@ -252,182 +335,6 @@ const GRAV = 0.7, SPEED = 4.2, JUMP = -13, MAXF = 16, SPRING = -19;
 /* Ukuran karakter. Gambar asli 22x34, diperbesar 1.3x supaya lebih jelas. */
 const SCALE = 1.3, PW = Math.round(22*SCALE), PH = Math.round(34*SCALE);
 const newPlayer = () => ({x:L.start[0], y:L.start[1] + 34 - PH, w:PW, h:PH, vx:0, vy:0, ground:null, face:1});
-
-/* ---------- level building blocks ---------- */
-const plat = (x,y,w,h,o={}) => { const s = Object.assign({type:'plat',x,y,w,h,vy:0,falling:false,gone:false,timer:0,deadly:false}, o); if (s.move) s.move.dir = 1; return s; };
-const fake = (x,y,w,h) => plat(x,y,w,h,{type:'fake'});
-const hidden = (x,y,w,h) => plat(x,y,w,h,{type:'hidden',revealed:false});
-const block = (x,y,w,h,o={}) => plat(x,y,w,h,Object.assign({type:'block'}, o));
-const spike = (x,y,w,o={}) => Object.assign({x,y,w,h:20,t:o.hidden?0:1,popped:!o.hidden}, o);
-
-/* ---------- kit pembuat level (dipakai level 10–19) ----------
-   Peta disusun dari kiri ke kanan; setiap bagian menambah lebar peta.
-   G(lebar, ...isi)               tanah datar
-   PIT(lebar, ...isi)             jurang berduri yang harus dilompati
-   BRIDGE(lebar, pijakan, ...isi) jurang dengan pijakan [dx, y, lebar, jenis, opsi]
-       jenis: 'n' biasa · 'c' rapuh · 'f' palsu · 'b' berkedip · 's' pegas
-              'mx' lift kiri-kanan · 'my' lift naik-turun · 'h' blok tak terlihat
-   isi (posisi dihitung dari awal bagian):
-       pop(x) duri kejutan · drop(x) blok jatuh · piston(x, lebar, naik, turun, fase)
-       bug(x0, x1, kecepatan) bug berjalan · fly(x, y0, y1, kecepatan) bug terbang
-       rev(x0, x1) kontrol terbalik · wind(x0, x1, gaya) angin · lowgrav(x0, x1) gravitasi rendah
-       liar(x) hati palsu
-   Hati asli otomatis ada di ujung kanan peta. */
-const piece = (x, y, w, kind, o) => {
-  o = typeof o === 'number' ? {stand:o} : (o || {});
-  switch (kind){
-    case 'c':  return plat(x, y, w, 18, {fall:{stand:o.stand || 18}});
-    case 'f':  return fake(x, y, w, 18);
-    case 'b':  return plat(x, y, w, 18, {blink:{on:o.on || 80, off:o.off || 60, phase:o.phase || 0}});
-    case 's':  return plat(x, y, w, 14, {type:'spring', squish:0});
-    case 'mx': return plat(x, y, w, 16, {move:{ax:'x', a:x, b:x + o.r, speed:o.speed || 1.8}});
-    case 'my': return plat(x, y, w, 16, {move:{ax:'y', a:y, b:y + o.r, speed:o.speed || 1.4}});
-    case 'h':  return hidden(x, y, w, 20);
-    default:   return plat(x, y, w, 18);
-  }
-};
-const G = (w, ...ex) => (lv, x) => { lv.solids.push(plat(x, 480, w, 60)); ex.forEach(f => f(lv, x)); return x + w; };
-const PIT = (w, ...ex) => (lv, x) => { lv.spikes.push(spike(x, 540, w)); ex.forEach(f => f(lv, x)); return x + w; };
-const BRIDGE = (w, items, ...ex) => (lv, x) => {
-  lv.spikes.push(spike(x, 540, w));
-  items.forEach(([dx, y, pw, kind, o]) => lv.solids.push(piece(x + dx, y, pw, kind, o)));
-  ex.forEach(f => f(lv, x));
-  return x + w;
-};
-const pop = (o, w = 40) => (lv, x) => lv.spikes.push(spike(x + o, 480, w, {hidden:true, trig:x + o - 35}));
-const drop = (o, w = 60) => (lv, x) => lv.solids.push(block(x + o, -80, w, 60, {fall:{near:x + o - 30}, deadly:true, land:480}));
-const piston = (o, w, on, off, phase = 0) => (lv, x) => lv.spikes.push(spike(x + o, 480, w, {cycle:{on, off, phase}}));
-const bug = (o0, o1, speed = 1.6) => (lv, x) => lv.bugs.push({ax:'x', x:x + o0, y:464, w:26, h:16, a:x + o0, b:x + o1 - 26, speed, dir:1});
-const fly = (o, y0, y1, speed = 2) => (lv, x) => lv.bugs.push({ax:'y', x:x + o, y:y0, w:24, h:18, a:y0, b:y1, speed, dir:1, fly:true});
-const rev = (o0, o1) => (lv, x) => lv.zones.push({type:'reverse', x0:x + o0, x1:x + o1});
-const wind = (o0, o1, force) => (lv, x) => lv.zones.push({type:'wind', x0:x + o0, x1:x + o1, force});
-const lowgrav = (o0, o1) => (lv, x) => lv.zones.push({type:'float', x0:x + o0, x1:x + o1});
-const liar = o => (lv, x) => lv.extraGoals.push({x:x + o, y:440, fake:true});
-function build(meta, parts){
-  const lv = Object.assign({start:[40,446], solids:[], spikes:[], bugs:[], zones:[], extraGoals:[]}, meta);
-  let x = 0;
-  for (const part of parts) x = part(lv, x);
-  lv.width = x;
-  lv.goal = {x:x - 60, y:440};
-  if (meta.hops){ lv.goal.hops = meta.hops.map(([dx, y]) => [x + dx, y]); lv.goal.hopDist = meta.hopDist || 100; }
-  if (meta.chase) lv.chase = Object.assign({x:-160, delay:150}, meta.chase);
-  return lv;
-}
-
-/* ---------- daftar level: urutan = nomor level (1, 2, 3, ...) ---------- */
-const LEVEL_LIBRARY = [
-  () => ({
-    file:'hello_world.py', start:[40,446],
-    msg:'Level satu. Gampang kok, percaya deh sama aku.',
-    solids:[plat(0,480,300,60), plat(300,480,130,60,{fall:{near:285}}), plat(430,480,530,60)],
-    spikes:[spike(300,540,130), spike(600,480,60,{hidden:true,trig:590})],
-    goal:{x:880,y:440,hops:[[100,440]],hopDist:110},
-    zones:[],
-    code:['def hello_world():','    lantai = "aman"  # bohong','    if pemain.dekat(lubang):','        lantai.jatuh()','    duri.muncul(tiba_tiba=True)','    hati.kabur(sekali=True)','    return "gampang kan?"']
-  }),
-  () => ({
-    file:'rumus_hati.cpp', start:[40,446],
-    msg:'Rumus ini kutulis 7 hari. Jangan injak lama-lama ya.',
-    solids:[plat(0,480,220,60), plat(270,410,110,20,{fall:{stand:22}}), plat(440,340,110,20), plat(610,270,120,20), plat(790,220,170,20),
-            block(800,-90,150,60,{fall:{near:736},deadly:true,land:220})],
-    spikes:[spike(220,540,740)],
-    goal:{x:880,y:120},
-    zones:[],
-    code:['#include <cinta.h>','double r(double t){','  return a * (1 - sin(t));','}','// tangga ini rapuh','void langit(){ blok.jatuh(); }','int main(){ while(1) coba(); }']
-  }),
-  () => ({
-    file:'chriss.exe', start:[40,446],
-    msg:'Chriss bilang aku suka curang. Dia benar.',
-    solids:[plat(0,480,380,60), hidden(360,370,110,24), plat(490,480,470,60)],
-    spikes:[spike(380,540,110), spike(780,480,60,{hidden:true,trig:740})],
-    goal:{x:900,y:440},
-    zones:[{type:'reverse',x0:560,x1:760}],
-    code:['MOV  kontrol, -kontrol','JMP  blok_tak_terlihat','; lubang ini pas sekali','; untuk lompatan kamu','CALL duri.kejutan','CMP  nyawa, 0','JE   tertawa']
-  }),
-  () => ({
-    file:'debug_cinta.js', start:[150,446],
-    msg:'Hati yang asli tidak selalu ada di depan mata.',
-    solids:[plat(0,480,400,60), fake(400,480,120,60), plat(520,480,440,60),
-            block(700,-80,80,60,{fall:{near:690},deadly:true,land:480})],
-    spikes:[spike(400,540,120), spik  <p class="rotate">Tips: miringkan HP ke mode landscape biar arenanya lebih besar.</p>
-        </div>
-      </div>
-
-      <div class="overlay" id="ovFake" hidden>
-        <div class="card fake">
-          <div class="eyebrow">build sukses · semua level selesai</div>
-          <h2>TAMAT</h2>
-          <p>Kamu menaklukkan semua jebakan Mr Calvin. Selamat!</p>
-          <p id="fake2" class="glitch" hidden>...tunggu.</p>
-          <p id="fake3" hidden>Masih ada satu file yang belum dijalankan: <b>final.exe</b></p>
-          <div class="row"><button class="primary" id="btnNext" hidden>Jalankan final.exe</button></div>
-        </div>
-      </div>
-
-      <div class="overlay" id="ovOver" hidden>
-        <div class="card">
-          <div class="eyebrow" id="overCode">exit code 3 · nyawa = 0</div>
-          <h2 id="overTitle">Kamu tumbang di Level 1</h2>
-          <div class="quote"><b>MR CALVIN</b><span id="overQuote">Sudah kubilang, tidak ada yang bisa menang.</span></div>
-          <div class="stats">
-            <div><span>LEVEL</span><b id="stLevel">1/10</b></div>
-            <div><span>MATI</span><b id="stDeaths">3</b></div>
-            <div><span>WAKTU</span><b id="stTime">0:00</b></div>
-            <div><span>REKORMU</span><b id="stBest">1/10</b></div>
-          </div>
-          <p class="challenge" id="vsResult" hidden></p>
-          <div class="share">
-            <label for="nameInput">Tantang teman: tulis namamu</label>
-            <div class="row">
-              <input type="text" id="nameInput" maxlength="16" placeholder="contoh: Alfandi" autocomplete="off">
-              <button id="btnChallenge">Buat tantangan</button>
-            </div>
-            <div id="shareOut" hidden class="share">
-              <div class="msgbox" id="challengeText"></div>
-              <div class="row">
-                <button class="primary" id="btnCopy">Salin pesan</button>
-                <span class="muted" id="copyNote"></span>
-              </div>
-              <p class="muted">Link halaman ini sudah memuat namamu dan level-mu. Salin link game ini lalu kirim bersama pesan di atas. Temanmu akan melihat tantanganmu saat membukanya.</p>
-            </div>
-          </div>
-          <div class="row"><button id="btnRetry">Coba lagi (<span class="cfgLife">3 nyawa</span> baru)</button></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="status">
-      <span id="statusLeft">UTF-8 · Mr Calvin Lang</span>
-      <span>// TODO: menang (tidak pernah dikerjakan)</span>
-    </div>
-  </div>
-
-  <div class="pad" id="pad">
-    <div class="lr">
-      <button id="padL" aria-label="Kiri">◀</button>
-      <button id="padR" aria-label="Kanan">▶</button>
-    </div>
-    <button class="jump" id="padJ" aria-label="Lompat">LOMPAT</button>
-  </div>
-</div>
-
-<script>
-(() => {
-const cv = document.getElementById('game');
-const ctx = cv.getContext('2d');
-const W = 960, H = 540;
-const DPR = Math.min(2, window.devicePixelRatio || 1);
-cv.width = W * DPR; cv.height = H * DPR;
-ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-const $ = id => document.getElementById(id);
-
-const css = getComputedStyle(document.documentElement);
-const C = {};
-['ink','panel','panel-2','line','text','muted','flame','heart','steel','err'].forEach(k => C[k.replace('-','')] = css.getPropertyValue('--' + k).trim());
-const MONO = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
-const DISP = '"Chakra Petch", system-ui, sans-serif';
-
-const GRAV = 0.7, SPEED = 4.2, JUMP = -13, MAXF = 16, SPRING = -19;
 
 /* ---------- level building blocks ---------- */
 const plat = (x,y,w,h,o={}) => { const s = Object.assign({type:'plat',x,y,w,h,vy:0,falling:false,gone:false,timer:0,deadly:false}, o); if (s.move) s.move.dir = 1; return s; };
@@ -563,7 +470,7 @@ const LEVEL_LIBRARY = [
   /* ---- level 7: 2400 px, gelap total ---- */
   () => ({
     file:'dark_mode.css', start:[40,446], width:2400, dark:true,
-    msg:'Lampunya kumatikan. Kamu kan korek api, terangi sendiri.',
+    msg:'Lampunya kumatikan. Semoga matamu cepat terbiasa.',
     solids:[plat(0,480,300,60), plat(420,480,280,60), plat(830,480,270,60),
             plat(1160,430,80,18), plat(1300,380,80,18,{fall:{stand:18}}), plat(1440,430,80,18),
             plat(1520,480,380,60), plat(2000,480,400,60),
@@ -837,7 +744,7 @@ const TAUNTS = {
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
 function setMsg(t, f){ msgText = t; msgT = f; }
-let cam = 0;
+let cam = 0, camY = 0;
 function prepLevel(l){
   l.width = l.width || W;
   l.solids = l.solids || []; l.spikes = l.spikes || []; l.bugs = l.bugs || []; l.zones = l.zones || [];
@@ -846,13 +753,14 @@ function prepLevel(l){
   l.goals.forEach(g => { g.tx = g.x; g.ty = g.y; });
   return l;
 }
-function camTarget(){ return Math.max(0, Math.min(L.width - W, p.x + p.w/2 - W/2)); }
+function camYTarget(){ return Math.max(0, Math.min(H - VH, p.y + p.h/2 - VH * 0.6)); }
+function camTarget(){ return Math.max(0, Math.min(L.width - VW, p.x + p.w/2 - VW * (VW < 700 ? 0.36 : 0.5))); }
 
 function loadLevel(i){
   cur = i;
   L = prepLevel(LEVELS[i]());
-  p = {x:L.start[0], y:L.start[1], w:22, h:34, vx:0, vy:0, ground:null};
-  cam = camTarget();
+  p = newPlayer();
+  cam = camTarget(); camY = camYTarget();
   coyote = 0; jumpBuf = 0; teleCount = 0; reversed = false;
   reached = Math.max(reached, i+1);
   state = 'play';
@@ -902,6 +810,7 @@ function step(){
   reversed = !!inZone('reverse');
   if (reversed) dir = -dir;
   p.vx = dir * SPEED;
+  if (p.vx) p.face = Math.sign(p.vx);
   const wz = inZone('wind'), fz = inZone('float');
   if (p.ground) coyote = 6; else if (coyote > 0) coyote--;
   if (jumpBuf > 0) jumpBuf--;
@@ -922,13 +831,13 @@ function step(){
   for (const s of L.solids){
     if (s.gone) continue;
     if (s.type === 'hidden' && !s.revealed){
-      if (p.vy < 0 && hit(p,s)){ s.revealed = true; p.y = s.y + s.h; p.vy = 0; burst(p.x+11, p.y, C.heart, 10); setMsg('Blok tak terlihat. Aku memang jenius.', 120); }
+      if (p.vy < 0 && hit(p,s)){ s.revealed = true; p.y = s.y + s.h; p.vy = 0; burst(p.x+p.w/2, p.y, C.heart, 10); setMsg('Blok tak terlihat. Aku memang jenius.', 120); }
       continue;
     }
     if (!solid(s) || !hit(p,s)) continue;
     if (p.vy >= 0){
       p.y = s.y - p.h;
-      if (s.type === 'spring'){ p.vy = SPRING; p.boost = true; s.squish = 10; burst(p.x+11, p.y+p.h, C.flame, 8); }
+      if (s.type === 'spring'){ p.vy = SPRING; p.boost = true; s.squish = 10; burst(p.x+p.w/2, p.y+p.h, C.flame, 8); }
       else { p.vy = 0; p.ground = s; }
     }
     else { p.y = s.y + s.h; p.vy = 0; }
@@ -992,16 +901,17 @@ function step(){
   }
   if (p.y > H + 30) return die('fall');
   cam += (camTarget() - cam) * 0.15;
+  camY += (camYTarget() - camY) * 0.12;
 }
 
 function die(r){
   state = 'dead'; stT = 85; lives--; deaths++; deathReason = r;
-  burst(p.x+11, p.y+17, C.flame, 26); burst(p.x+11, p.y+17, C.err, 14);
+  burst(p.x+p.w/2, p.y+p.h/2, C.flame, 26); burst(p.x+p.w/2, p.y+p.h/2, C.err, 14);
   setMsg(Math.random() < 0.55 ? pick(TAUNTS[r] || TAUNTS.any) : pick(TAUNTS.any), 85);
   updateHUD();
 }
 function afterDeath(){ if (lives <= 0) gameOver(); else loadLevel(cur); }
-function win(){ state = 'win'; stT = 60; burst(p.x+11, p.y+10, C.heart, 30); setMsg('...beruntung.', 60); }
+function win(){ state = 'win'; stT = 60; burst(p.x+p.w/2, p.y+10, C.heart, 30); setMsg('...beruntung.', 60); }
 function afterWin(){
   if (cur === N - 2){ showFakeEnd(); return; }
   loadLevel(cur + 1);
@@ -1014,7 +924,7 @@ function burst(x,y,color,n){
 function hash(n){ const x = Math.sin(n*127.1)*43758.5453; return x - Math.floor(x); }
 
 function drawBackground(){
-  ctx.fillStyle = C.ink; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = C.ink; ctx.fillRect(0,0,VW,VH);
   ctx.fillStyle = C.panel; ctx.fillRect(0,0,34,H);
   ctx.font = '12px ' + MONO; ctx.textBaseline = 'middle';
   const lines = L ? L.code : [];
@@ -1099,7 +1009,7 @@ function drawBug(b){
 }
 
 function drawZone(z, ox){
-  if (z.x1 < ox || z.x0 > ox + W || z.type === 'reverse') return;
+  if (z.x1 < ox || z.x0 > ox + VW || z.type === 'reverse') return;
   if (z.type === 'wind'){
     ctx.font = '600 18px ' + MONO; ctx.fillStyle = C.steel; ctx.globalAlpha = 0.18;
     const sh = ((L.t * z.force) % 60 + 60) % 60;
@@ -1160,27 +1070,55 @@ function drawGoal(g){
   ctx.textAlign = 'left';
 }
 
+/* Karakter: mahasiswa berjas almamater merah dan celana hitam */
 function drawPlayer(){
-  const x = Math.round(p.x), y = Math.round(p.y);
-  const fh = 9 + Math.sin(tick*0.5)*1.6 + Math.random()*1.2;
-  ctx.fillStyle = C.flame;
-  ctx.beginPath(); ctx.ellipse(x+7, y-fh/2+1, 4.5, fh/2+1, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#ffe9a8';
-  ctx.beginPath(); ctx.ellipse(x+7, y-fh/2+3, 2, fh/3, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = C.steel; roundRect(x+1, y+1, 20, 10, 2); ctx.fill();
-  ctx.fillStyle = C.muted; ctx.beginPath(); ctx.arc(x+16, y+6, 3, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = C.err; roundRect(x, y+10, 22, 24, 4); ctx.fill();
-  ctx.fillStyle = C.ink; ctx.globalAlpha = .25; ctx.fillRect(x+4, y+14, 3, 16); ctx.globalAlpha = 1;
+  const x = Math.round(p.x) + p.w/2, y = Math.round(p.y);
+  const moving = Math.abs(p.vx) > 0.1, air = !p.ground;
+  if (moving && !air) p.walk = (p.walk || 0) + 0.32;
+  const sw = air ? 0.55 : (moving ? Math.sin(p.walk) * 0.65 : 0);
+  ctx.save(); ctx.translate(x, y); ctx.scale((p.face || 1) * SCALE, SCALE);
+  const leg = (a, off) => {
+    ctx.save(); ctx.translate(off, 24); ctx.rotate(a);
+    ctx.fillStyle = C.pants; ctx.fillRect(-2.5, 0, 5, 8.5);
+    ctx.fillStyle = C.shoe; ctx.fillRect(-2.5, 7.5, 6.5, 2.5);
+    ctx.restore();
+  };
+  const arm = (a, col) => {
+    ctx.save(); ctx.translate(0, 14.5); ctx.rotate(a);
+    ctx.fillStyle = col; ctx.fillRect(-2, 0, 4, 8.5);
+    ctx.fillStyle = C.skin; ctx.fillRect(-1.8, 8, 3.6, 2.6);
+    ctx.restore();
+  };
+  leg(sw, -2.5); leg(-sw, 2.5);
+  arm(air ? -2.4 : -sw, C.jacket2);
+  // jas almamater
+  ctx.fillStyle = C.jacket; roundRect(-7, 12, 14, 14, 3); ctx.fill();
+  ctx.fillStyle = C.jacket2; ctx.fillRect(-7, 24, 14, 2);
+  // kemeja putih dan dasi
+  ctx.fillStyle = C.shirt; ctx.beginPath(); ctx.moveTo(-3.5, 12); ctx.lineTo(3.5, 12); ctx.lineTo(0, 19); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = C.shoe; ctx.fillRect(-0.8, 13, 1.6, 5);
+  // lambang almamater
+  ctx.fillStyle = C.flame; ctx.fillRect(3, 17, 2.5, 2.5);
+  arm(air ? -2.8 : sw, C.jacket);
+  // kepala
+  ctx.fillStyle = C.skin; ctx.beginPath(); ctx.arc(0, 6.5, 6, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C.hair; ctx.beginPath(); ctx.arc(0, 5.5, 6.2, Math.PI, Math.PI*2); ctx.fill();
+  ctx.fillRect(-6.2, 4.5, 4, 4.5);
+  ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(6.5, 3); ctx.lineTo(1, 4.5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = C.shoe; ctx.fillRect(2.6, 6, 1.6, 2.2);
+  ctx.fillStyle = C.jacket2; ctx.fillRect(1.5, 10, 3, 1);
+  ctx.restore();
 }
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
-function drawCeil(c){
+function drawCeil(c0){
+  const c = {y: c0.y - Math.round(camY)};
   if (c.y <= -30) return;
-  ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, W, Math.max(0, c.y));
-  ctx.fillStyle = C.err; ctx.fillRect(0, c.y-2, W, 2);
+  ctx.fillStyle = C.panel2; ctx.fillRect(0, 0, VW, Math.max(0, c.y));
+  ctx.fillStyle = C.err; ctx.fillRect(0, c.y-2, VW, 2);
   ctx.fillStyle = C.steel; ctx.strokeStyle = C.ink;
-  for (let x = 0; x < W; x += 20){ ctx.beginPath(); ctx.moveTo(x, c.y); ctx.lineTo(x+10, c.y+16); ctx.lineTo(x+20, c.y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
-  if (c.y > 26){ ctx.fillStyle = C.err; ctx.font = '700 15px ' + DISP; ctx.textAlign = 'center'; ctx.fillText('DEADLINE', W/2, c.y - 10); ctx.textAlign = 'left'; }
+  for (let x = 0; x < VW; x += 20){ ctx.beginPath(); ctx.moveTo(x, c.y); ctx.lineTo(x+10, c.y+16); ctx.lineTo(x+20, c.y); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  if (c.y > 26){ ctx.fillStyle = C.err; ctx.font = '700 15px ' + DISP; ctx.textAlign = 'center'; ctx.fillText('DEADLINE', VW/2, c.y - 10); ctx.textAlign = 'left'; }
 }
 
 function wrap(text, maxW){
@@ -1190,77 +1128,78 @@ function wrap(text, maxW){
   return out;
 }
 function drawMsg(){
-  ctx.font = '15px ' + MONO;
-  const lines = wrap(msgText, 560);
+  const big = VW < 700, fs = big ? 18 : 15, lh = big ? 25 : 21;
+  ctx.font = fs + 'px ' + MONO;
+  const lines = wrap(msgText, Math.min(560, VW - 100));
   const w = Math.min(620, Math.max(...lines.map(l => ctx.measureText(l).width)) + 32);
-  const h = 38 + lines.length*21;
-  const x = 50, y = 16;
+  const h = 38 + lines.length*lh;
+  const x = 44, y = 16;
   ctx.globalAlpha = Math.min(1, msgT/15);
   ctx.fillStyle = C.panel; roundRect(x, y, w, h, 8); ctx.fill();
   ctx.strokeStyle = C.flame; ctx.lineWidth = 1; ctx.stroke();
   ctx.fillStyle = C.flame; ctx.font = '600 11px ' + MONO; ctx.fillText('MR CALVIN', x+16, y+18);
-  ctx.fillStyle = C.text; ctx.font = '15px ' + MONO;
-  lines.forEach((l,i) => ctx.fillText(l, x+16, y+40+i*21));
+  ctx.fillStyle = C.text; ctx.font = fs + 'px ' + MONO;
+  lines.forEach((l,i) => ctx.fillText(l, x+16, y+40+i*lh));
   ctx.globalAlpha = 1;
 }
 
 function draw(){
   drawBackground();
   if (!L) return;
-  const ox = Math.round(cam);
-  ctx.save(); ctx.translate(-ox, 0);
+  const ox = Math.round(cam), oy = Math.round(camY);
+  ctx.save(); ctx.translate(-ox, -oy);
   for (const z of L.zones) drawZone(z, ox);
-  for (const s of L.solids) if (s.x + s.w > ox - 20 && s.x < ox + W + 20) drawSolid(s);
+  for (const s of L.solids) if (s.x + s.w > ox - 20 && s.x < ox + VW + 20) drawSolid(s);
   ctx.globalAlpha = 1;
-  for (const k of L.spikes) if (k.x + k.w > ox && k.x < ox + W) drawSpikes(k);
-  for (const b of L.bugs) if (b.x + b.w > ox && b.x < ox + W) drawBug(b);
+  for (const k of L.spikes) if (k.x + k.w > ox && k.x < ox + VW) drawSpikes(k);
+  for (const b of L.bugs) if (b.x + b.w > ox && b.x < ox + VW) drawBug(b);
   if (L.chase) drawChase(L.chase, ox);
   if (state !== 'dead') drawPlayer();
   for (const q of parts){ ctx.globalAlpha = Math.min(1, q.life/20); ctx.fillStyle = q.color; ctx.fillRect(q.x-2, q.y-2, 4, 4); }
   ctx.globalAlpha = 1;
   ctx.restore();
   if (L.dark){
-    const sx = p.x + p.w/2 - ox, sy = p.y + 8;
+    const sx = p.x + p.w/2 - ox, sy = p.y + 8 - oy;
     const g = ctx.createRadialGradient(sx, sy, 50, sx, sy, 200);
     g.addColorStop(0, 'rgba(12,15,32,0)'); g.addColorStop(1, C.ink);
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
   }
-  ctx.save(); ctx.translate(-ox, 0);
+  ctx.save(); ctx.translate(-ox, -oy);
   L.goals.forEach(drawGoal);
   if (reversed && state === 'play'){
     ctx.font = '600 12px ' + MONO; ctx.fillStyle = C.err; ctx.textAlign = 'center';
-    ctx.fillText('kontrol.balik()', p.x + 11, p.y - 22); ctx.textAlign = 'left';
+    ctx.fillText('kontrol.balik()', p.x + p.w/2, p.y - 14); ctx.textAlign = 'left';
   }
   ctx.restore();
   if (L.ceil) drawCeil(L.ceil);
   if (L.chase && L.chase.x < ox - 40 && L.chase.delay <= 0){
     ctx.font = '600 12px ' + MONO; ctx.fillStyle = C.err;
-    ctx.fillText(`◀ DEADLINE ${Math.round(ox - L.chase.x)} px`, 44, H - 28);
+    ctx.fillText(`◀ DEADLINE ${Math.round(ox - L.chase.x)} px`, 44, VH - 28);
   }
-  if (L.width > W){
-    const bx = 60, bw = W - 120, by = H - 10;
+  if (L.width > VW){
+    const bx = 60, bw = VW - 120, by = VH - 10;
     ctx.fillStyle = C.line; ctx.fillRect(bx, by, bw, 3);
     ctx.fillStyle = C.heart; ctx.fillRect(bx + bw - 3, by - 3, 3, 9);
     ctx.fillStyle = C.flame; ctx.beginPath(); ctx.arc(bx + bw * Math.min(1, (p.x + p.w/2) / L.width), by + 1.5, 5, 0, Math.PI*2); ctx.fill();
   }
   if (state === 'dead'){
-    ctx.fillStyle = C.err; ctx.globalAlpha = 0.1; ctx.fillRect(0,0,W,H); ctx.globalAlpha = 1;
+    ctx.fillStyle = C.err; ctx.globalAlpha = 0.1; ctx.fillRect(0,0,VW,VH); ctx.globalAlpha = 1;
     ctx.textAlign = 'center';
-    ctx.font = '700 34px ' + DISP; ctx.fillStyle = C.err; ctx.fillText('RuntimeError: nyawa -= 1', W/2, H/2 - 8);
-    ctx.font = '14px ' + MONO; ctx.fillStyle = C.muted; ctx.fillText(lives > 0 ? `sisa nyawa: ${lives}` : 'sisa nyawa: 0 · menghentikan program...', W/2, H/2 + 24);
+    ctx.font = (VW < 700 ? '700 26px ' : '700 34px ') + DISP; ctx.fillStyle = C.err; ctx.fillText('RuntimeError: nyawa -= 1', VW/2, VH/2 - 8);
+    ctx.font = '14px ' + MONO; ctx.fillStyle = C.muted; ctx.fillText(lives > 0 ? `sisa nyawa: ${lives}` : 'sisa nyawa: 0 · menghentikan program...', VW/2, VH/2 + 24);
     ctx.textAlign = 'left';
   }
   if (state === 'win'){
     ctx.textAlign = 'center'; ctx.font = '700 34px ' + DISP; ctx.fillStyle = C.flame;
-    ctx.fillText('build sukses', W/2, H/2); ctx.textAlign = 'left';
+    ctx.fillText('build sukses', VW/2, VH/2); ctx.textAlign = 'left';
   }
   if (msgT > 0 && msgText) drawMsg();
 }
 
 /* ---------- HUD ---------- */
-const LIGHTER = '<svg viewBox="0 0 16 24" aria-hidden="true"><ellipse cx="5.5" cy="4.5" rx="3" ry="4.5" fill="var(--flame)"/><rect x="1" y="8" width="14" height="5" rx="1" fill="var(--steel)"/><rect x="0.5" y="12" width="15" height="12" rx="2.5" fill="var(--err)"/></svg>';
+const AVATAR = '<svg viewBox="0 0 16 24" aria-hidden="true"><rect x="1.5" y="12" width="13" height="12" rx="3" fill="var(--jacket)"/><path d="M5.5 12h5L8 17z" fill="var(--shirt)"/><circle cx="8" cy="7" r="5" fill="var(--skin)"/><path d="M3 7a5 5 0 0 1 10 0c-2.5-1.6-7.5-1.6-10 0z" fill="var(--hair)"/></svg>';
 function updateHUD(){
-  const icon = on => LIGHTER.replace('<svg', `<svg class="${on ? '' : 'lost'}"`);
+  const icon = on => AVATAR.replace('<svg', `<svg class="${on ? '' : 'lost'}"`);
   $('lives').innerHTML = MAX_LIFE <= 10
     ? Array.from({length:MAX_LIFE}, (_, i) => icon(i < lives)).join('')
     : icon(lives > 0) + `<b>×${lives}</b>`;
@@ -1286,6 +1225,8 @@ const stage = $('stage');
 function showOverlay(id){
   ['ovStart','ovFake','ovOver'].forEach(o => $(o).hidden = o !== id);
   stage.classList.toggle('menu', !!id);
+  document.body.classList.toggle('inmenu', !!id);
+  fitCanvas();
 }
 function startRun(){
   lives = MAX_LIFE; deaths = 0; elapsed = 0; reached = 1; parts.length = 0;
@@ -1395,11 +1336,15 @@ function bindPad(id, k){
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
 bindPad('padL','left'); bindPad('padR','right'); bindPad('padJ','jump');
-addEventListener('touchstart', () => document.body.classList.add('touch'), {once:true, passive:true});
+addEventListener('touchstart', () => { document.body.classList.add('touch'); detectMobile(); fitCanvas(); }, {once:true, passive:true});
+addEventListener('resize', () => { detectMobile(); fitCanvas(); });
+if (window.ResizeObserver) new ResizeObserver(() => fitCanvas()).observe(stageEl);
+document.body.classList.add('inmenu');
+detectMobile(); fitCanvas();
 
 /* ---------- loop ---------- */
 L = prepLevel(LEVELS[0]());
-p = {x:L.start[0], y:L.start[1], w:22, h:34, vx:0, vy:0, ground:null};
+p = newPlayer();
 applyConfigText();
 updateHUD();
 
