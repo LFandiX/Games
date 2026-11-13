@@ -187,6 +187,36 @@ body.mobile.land .pad{position:fixed;left:0;right:0;bottom:0;z-index:5;pointer-e
 body.mobile.land .pad .lr{gap:2.5vh}
 body.mobile.land .pad button{pointer-events:auto;width:19vh;height:24vh;font-size:7vh;border-radius:5vh}
 body.mobile.land .pad button.jump{width:31vh;font-size:5vh}
+
+/* ---------- tablet: layar sentuh besar, ukuran pakai px ---------- */
+body.mobile.tablet header{display:flex}
+body.mobile.tablet .wrap{padding-block:14px;gap:12px}
+body.mobile.tablet header h1{font-size:28px}
+body.mobile.tablet header p{font-size:13px}
+body.mobile.tablet .ide{border-radius:12px}
+body.mobile.tablet .tabs{font-size:15px;gap:12px}
+body.mobile.tablet .tab{padding:10px 16px;gap:10px}
+body.mobile.tablet .tab i{width:9px;height:9px}
+body.mobile.tablet .hud{padding:6px 16px;gap:18px}
+body.mobile.tablet .lives{gap:4px}
+body.mobile.tablet .lives svg{width:18px;height:27px}
+body.mobile.tablet .overlay{padding:28px}
+body.mobile.tablet .card{font-size:17px;gap:16px;max-width:640px;margin:auto}
+body.mobile.tablet .card h2{font-size:46px}
+body.mobile.tablet .fake h2{font-size:84px}
+body.mobile.tablet .stats{grid-template-columns:repeat(4,1fr);gap:10px}
+body.mobile.tablet .stats div{padding:10px 12px;border-radius:10px}
+body.mobile.tablet .row{gap:12px}
+body.mobile.tablet .card button,body.mobile.tablet input[type=text],body.mobile.tablet .challenge,body.mobile.tablet .msgbox{border-radius:10px}
+body.mobile.tablet .pad{gap:16px;padding:0 0 4px}
+body.mobile.tablet .pad .lr{gap:16px}
+body.mobile.tablet .pad button{width:124px;height:92px;font-size:34px;border-radius:22px}
+body.mobile.tablet .pad button.jump{width:220px;font-size:22px}
+/* tablet miring: tombol di kiri dan kanan arena */
+body.mobile.tablet.land:not(.inmenu) .wrap{padding-left:calc(276px + env(safe-area-inset-left,0px));padding-right:calc(220px + env(safe-area-inset-right,0px))}
+body.mobile.tablet.land .pad{padding:0 calc(20px + env(safe-area-inset-right,0px)) calc(44px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px))}
+body.mobile.tablet.land .pad button{width:116px;height:116px;font-size:34px;border-radius:24px}
+body.mobile.tablet.land .pad button.jump{width:180px;font-size:22px}
 @media (prefers-reduced-motion:reduce){button{transition:none}}
 </style>
 
@@ -301,7 +331,9 @@ let VW = W, VH = H;
 const stageEl = $('stage');
 function detectMobile(){
   const m = document.body.classList.contains('touch') || matchMedia('(pointer:coarse)').matches || (navigator.maxTouchPoints > 0 && matchMedia('(hover:none)').matches);
+  const big = Math.min(screen.width || 0, screen.height || 0) >= 600; // tablet: sisi terpendek layar >= 600
   document.body.classList.toggle('mobile', m);
+  document.body.classList.toggle('tablet', m && big);
   document.body.classList.toggle('land', m && innerWidth > innerHeight);
 }
 function fitCanvas(){
@@ -310,8 +342,8 @@ function fitCanvas(){
     const sw = stageEl.clientWidth, sh = stageEl.clientHeight;
     if (sw > 0 && sh > 0){
       const ratio = sw / sh;
-      // HP: tampilkan 420 unit tinggi dunia (zoom masuk), lebar mengikuti bentuk layar
-      vh = 420; vw = Math.round(vh * ratio);
+      // HP: tampilkan 420 unit tinggi dunia (zoom masuk); tablet: tinggi penuh 540
+      vh = document.body.classList.contains('tablet') ? H : 420; vw = Math.round(vh * ratio);
       if (vw < 340){ vw = 340; vh = Math.min(H, Math.round(vw / ratio)); }
       else if (vw > W){ vw = W; vh = Math.max(360, Math.round(W / ratio)); }
       const k = Math.min(sw / vw, sh / vh);
